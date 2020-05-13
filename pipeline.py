@@ -146,11 +146,12 @@ def run_sparql(sparql_query):
   print(len(results["results"]["bindings"]))
   return results
 
-def encode(results):
+def encode(results,rec_relations):
   data=[]
   output = {
         "text": "Resultado(s) retornado(s):",
         "related": [],
+        "relations":rec_relations
         "eval_options": True
     }
   
@@ -266,7 +267,7 @@ def search(text='',cont=None):
     results = run_sparql(sparql_query)
     print(results)
 
-    data= encode([results])
+    data= encode([results,rec_relations])
     print(data)
 
     cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,raw_relations_tuples,results['head']['vars'])
@@ -296,7 +297,7 @@ def search(text='',cont=None):
   results = run_sparql(sparql_query)
   print(results)
 
-  data= encode([results])
+  data= encode([results,rec_relations])
   print(data)
 
   cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,raw_relations_tuples,results['head']['vars'])
