@@ -208,7 +208,7 @@ interpreter = Interpreter.load('models/')
 cont = context.Context()
 
 
-def search(text='',cont=None):
+def search(text=''):
 
   text=clean_word(text)
 
