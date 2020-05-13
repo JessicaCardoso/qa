@@ -151,7 +151,7 @@ def encode(results,rec_relations):
   output = {
         "text": "Resultado(s) retornado(s):",
         "related": [],
-        "relations":rec_relations
+        "relations":rec_relations,
         "eval_options": True
     }
   
