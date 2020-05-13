@@ -7,8 +7,8 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 import pickle
 import context
 
-
-re_model = ClassificationModel('roberta', 'RE_models')
+#re_model = ClassificationModel('roberta', '/content/drive/My Drive/NLP/RE_models', args={})
+re_model = ClassificationModel('roberta', 'RE_models', use_cuda=True)
 entities_dict = pickle.load( open( "entities_dict.p", "rb" ) )
 
 login = "dslab"
@@ -207,7 +207,7 @@ interpreter = Interpreter.load('models/')
 cont = context.Context()
 
 
-def search(text=''):
+def search(text='',cont=None):
 
   text=clean_word(text)
 
@@ -238,11 +238,20 @@ def search(text=''):
             if is_domain(interest_entity['entity'],ent['entity'],cont):
               context_entities.append(ent['entity'])
               if(cond):#so pode receber relacoes 1 vez
-                relations=hist[2]
+                #retirar a relacao principal da questao
+                #Ex: premios do filme avatar tem ((movie,'',award),(movie,'',Avatar))
+                #comparamos com a interest var do historico eleito: 
+                #retiramos ((movie,'',award))
+                #print('history: ')
+                #print(hist[0][0])
+                for h in hist[2]:
+                  #print('h: ',h)
+                  if(h[0]!=hist[0][0] and h[2]!=hist[0][0]):
+                    relations.append(h)
                 cond=False
               relations.append([ent['entity'],'',interest_entity['entity']])
       print(context_entities)
-      print(relations)
+      print('infered relations:',relations)
     
     raw_relations_tuples = copy.deepcopy(relations)
     relations_tuples =extend_triples(relations)
@@ -253,7 +262,6 @@ def search(text=''):
     
     sparql_query,interest_var = sparql_build(relations_tuples)
     print(sparql_query,interest_var)
-    #return entities_rasa['intent']['name'],entities,relations_tuples,interest_var
 
     results = run_sparql(sparql_query)
     print(results)
@@ -295,6 +303,3 @@ def search(text=''):
 
   
   return data
-
-  
- 
