@@ -1,0 +1,3 @@
+SELECT ?cls ?sup WHERE { ?cls a owl:Class . OPTIONAL{ ?cls rdfs:subClassOf ?sup . } FILTER(?cls != owl:Thing)}
+SELECT ?prop ?sup ?domain ?range WHERE { ?prop a owl:ObjectProperty . OPTIONAL{ ?prop rdfs:subPropertyOf ?sup .} OPTIONAL{ ?prop rdfs:domain ?domain. } OPTIONAL{ ?prop rdfs:range ?range. } FILTER(?prop != owl:topObjectProperty)}
+SELECT ?prop ?sup ?domain ?range WHERE { ?prop a owl:DatatypeProperty . OPTIONAL{ ?prop rdfs:subPropertyOf ?sup . } OPTIONAL{?prop rdfs:domain ?domain.} OPTIONAL{ ?prop rdfs:range ?range.} FILTER(?prop != owl:topDataProperty)}
