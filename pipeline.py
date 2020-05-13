@@ -267,7 +267,7 @@ def search(text='',cont=None):
     results = run_sparql(sparql_query)
     print(results)
 
-    data= encode([results,rec_relations])
+    data= encode([results],rec_relations)
     print(data)
 
     cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,raw_relations_tuples,results['head']['vars'])
@@ -297,7 +297,7 @@ def search(text='',cont=None):
   results = run_sparql(sparql_query)
   print(results)
 
-  data= encode([results,rec_relations])
+  data= encode([results],rec_relations)
   print(data)
 
   cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,raw_relations_tuples,results['head']['vars'])
