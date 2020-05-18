@@ -10,7 +10,7 @@ from rdflib import URIRef, RDFS
 from sparql_builder import sparql_build
 from sparql_builder import constants
 
-data_path = 'pandas_data/'
+data_path = '/content/drive/My Drive/Jeca/Bot/dados/pandas_data/'
 graph = rdflib.Graph()
 graph.parse("data/movieontology.ttl", format="ttl")
 
@@ -52,7 +52,6 @@ def get_person_uri(birth_name):
       for index, row in df.iterrows():
           staff_pos = re.search(r"\w*_*-*\w*$", row["type"], re.IGNORECASE).group()
           results.append([row["uri"], staff_pos])
-      print('uris:',results)    
     except ValueError:
       return results
     return results
