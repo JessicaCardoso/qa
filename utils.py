@@ -10,7 +10,7 @@ from rdflib import URIRef, RDFS
 from sparql_builder import sparql_build
 from sparql_builder import constants
 
-data_path = '/content/drive/My Drive/Jeca/Bot/dados/pandas_data/'
+data_path = 'pandas_data/'
 graph = rdflib.Graph()
 graph.parse("data/movieontology.ttl", format="ttl")
 
@@ -70,7 +70,7 @@ def clean_word(palavra):
     nfkd = unicodedata.normalize('NFKD', palavra)
     palavraSemAcento = u"".join([c for c in nfkd if not unicodedata.combining(c)])
 
-    # Usa expressão regular para retornar a palavra apenas com números, letras e espaço
+    # Usa expressÃ£o regular para retornar a palavra apenas com nÃºmeros, letras e espaÃ§o
     return re.sub('[^a-zA-Z0-9 \\\]', '', palavraSemAcento)
 
 def especify_entities(entities):
