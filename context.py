@@ -3,7 +3,7 @@ class Context():
 	def __init__(self):
 		self.history = []
 		self.prop_by_movie_history = []
-		self.turn = 0
+		self.turn = -1
 		self.words = {'primeiro':1,'segundo':2,'terceiro':3,'quarto':4,'quinto':5,'sexto':6,'setimo':7,'oitavo':8,'nono':9,'decimo':10}
 		#self.history_index ={'movie_value':'search'}
 		self.domain_dict = {'actor': ['series', 'movie'],
@@ -38,9 +38,9 @@ class Context():
 			pass
 
 		if(intent=='property_by_movie_series'):
-			self.history.append((interest_var,entities,relations))
+			self.history.append((interest_var,entities,relations,data_results))
 		print("History: ")
-		print(self.history)
+		print(self.history[self.turn])
 
 
 	def search_for_numbers(self,text):
