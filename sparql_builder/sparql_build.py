@@ -105,6 +105,9 @@ def part3(question_triples, variables = None, sep="\n"):
   for key, value in values_temp.items():
     sparql_body.append(VALUES_TO.format(key, " ".join(value)))
     variables[key] = False
+    # diff
+    class_key = NER_ENTITIES_MAP[key]
+    sparql_body.append(self.template["CLASS"][class_key].format(f"?{key}"))
   
   for first, middle, last in question_triples_filtered:
     first_var = f"?{first}"
