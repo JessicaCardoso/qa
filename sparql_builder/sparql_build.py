@@ -107,7 +107,7 @@ def part3(question_triples, variables = None, sep="\n"):
     variables[key] = False
     # diff
     class_key = NER_ENTITIES_MAP[key]
-    sparql_body.append(self.template["CLASS"][class_key].format(f"?{key}"))
+    sparql_body.append(ONTOLOGY_CLASS[class_key].format(f"?{key}"))
   
   for first, middle, last in question_triples_filtered:
     first_var = f"?{first}"
