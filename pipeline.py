@@ -363,7 +363,7 @@ def search(text=''):
         "related": [],
         "relations":[],
         "results":[],
-        "eval_options": True
+        "eval_options": False
         }
       return output
 
@@ -403,15 +403,17 @@ def search(text=''):
         "related": [],
         "relations":[],
         "results":[],
-        "eval_options": True
+        "eval_options": False
         }
     return output
     
 #funciona
 #text= 'premios do Avatar'
+#text= 'premios de Avatar.'
+
 #text = 'atores que ganharam o oscar'
 #text = 'atores que foram indicados ao oscar'
-text = 'me diga a premiacao da atriz Angelina Jolie'
+#text = 'me diga a premiacao da atriz Angelina Jolie'
 #text = 'Me diga filmes da Angelina Jolie'
 #text = 'Me diga filmes da atriz Angelina Jolie'
 #text = 'filmes que ganharam o oscar'
@@ -428,8 +430,8 @@ text = 'me diga a premiacao da atriz Angelina Jolie'
 #text = 'Seria Angelina Jolie uma atriz'
 #text = 'Seria do genero diversão esse filme avatar?'
 
-results = search(text)
-print(results)
+#results = search(text)
+#print(results)
 #text = 'atores desse primeiro'
 #text = 'suas atrizes'
 
