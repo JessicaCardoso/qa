@@ -250,6 +250,35 @@ def relation_recommendation(relations):
       
   return new_relations
           
+def get_context_related(interest_entities,cont):
+  print('get context!!!')
+  print(cont.history)
+  relations=[]
+  cond=True
+  #percorrer o historico
+  for hist in cont.history:
+    for ent in hist[1]:
+      for interest_entity in interest_entities:
+        print(interest_entity['entity'],ent['entity'])
+        if is_domain(interest_entity['entity'],ent['entity'],cont):
+          print('Is domain!!')
+          #context_entities.append(ent['entity'])
+          if(cond):#so pode receber relacoes 1 vez
+            #retirar a relacao principal da questao
+            #Ex: premios do filme avatar tem ((movie,'',award),(movie,'',Avatar))
+            #comparamos com a interest var do historico eleito: 
+            #retiramos ((movie,'',award))
+            #print('history: ')
+            #print(hist[0][0])
+            for h in hist[2]:
+              print('h: ',h)
+              if(h[0]!=hist[0][0] and h[2]!=hist[0][0]):
+                relations.append(h)
+            cond=False
+          question_triple = [ent['entity'],'',interest_entity['entity']]
+          rec = get_relation(question_triple)
+          relations.append((question_triple[0],rec,question_triple[2]))
+  return relations
 
 import copy
 from rasa.nlu.model import Interpreter,Metadata
@@ -257,13 +286,43 @@ interpreter = Interpreter.load('models/')
 cont = context.Context()
 
 
-def search(text=''):
+def search(text='',recommendation=False):
 
   text=clean_word(text)
 
   entities_rasa = interpreter.parse(text)
   print('Raw Entities:')
   pprint(entities_rasa)
+
+  if(recommendation):
+    entities=especify_entities(entities_rasa['entities'])
+    print('Corrected Entities:')
+    pprint(entities)
+    relations_tuples = get_context_related(entities,cont)
+    print('new relations: ',relations_tuples)
+    
+    rec_relations = relation_recommendation(relations_tuples)
+    print(rec_relations)
+    
+    sparql_query,interest_var = sparql_build(relations_tuples)
+    print(sparql_query,interest_var)
+
+    try:
+      results = run_sparql(sparql_query)
+      data= encode([results],rec_relations)
+      cont.set_current_turn_results(text,data,'rec',entities,relations_tuples,results['head']['vars'])
+      return data
+    except Exception:
+      traceback.print_exc()
+      output = {
+        "text": "Sem resultados.",
+        "related": [],
+        "relations":[],
+        "results":[],
+        "eval_options": True
+        }
+      return output
+
 
   intent = entities_rasa['intent']['name']
   if(intent =='property_by_movie_series'):
@@ -285,30 +344,8 @@ def search(text=''):
     #sao as de interesse.
     ref=cont.search_for_numbers(text)
     print(ref)
-    cond=True
     if(ref==-1):
-      context_entities=[]
-      #percorrer o historico
-      for hist in cont.history:
-        
-        for ent in hist[1]:
-          for interest_entity in interest_entities:
-            if is_domain(interest_entity['entity'],ent['entity'],cont):
-              context_entities.append(ent['entity'])
-              if(cond):#so pode receber relacoes 1 vez
-                #retirar a relacao principal da questao
-                #Ex: premios do filme avatar tem ((movie,'',award),(movie,'',Avatar))
-                #comparamos com a interest var do historico eleito: 
-                #retiramos ((movie,'',award))
-                #print('history: ')
-                #print(hist[0][0])
-                for h in hist[2]:
-                  #print('h: ',h)
-                  if(h[0]!=hist[0][0] and h[2]!=hist[0][0]):
-                    relations.append(h)
-                cond=False
-              relations.append([ent['entity'],'',interest_entity['entity']])
-      print(context_entities)
+      relations = get_context_related(interest_entities,cont)
       print('infered relations:',relations)
 
     else:
@@ -344,7 +381,7 @@ def search(text=''):
     try:
       results = run_sparql(sparql_query)
       data= encode([results],rec_relations)
-      cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,raw_relations_tuples,results['head']['vars'])
+      cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,results['head']['vars'])
       return data
     except Exception:
       traceback.print_exc()
@@ -382,7 +419,7 @@ def search(text=''):
   try:
     results = run_sparql(sparql_query)
     data= encode([results],rec_relations)
-    cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,raw_relations_tuples,results['head']['vars'])
+    cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,results['head']['vars'])
     return data
   except Exception:
     traceback.print_exc()
@@ -400,7 +437,7 @@ text= 'premios do Avatar'
 #text = 'atores que ganharam o oscar'
 #text = 'atores que foram indicados ao oscar'
 #text = 'me diga a premiacao da atriz Angelina Jolie'
-text = 'Me diga filmes da Angelina Jolie'
+#text = 'Me diga filmes da Angelina Jolie'
 #text = 'Me diga filmes da atriz Angelina Jolie'
 #text = 'filmes que ganharam o oscar'
 #text = 'Indicações do filme El Sistema Pelegrin'
@@ -417,14 +454,15 @@ text = 'Me diga filmes da Angelina Jolie'
 #text = 'Seria Angelina Jolie uma atriz'
 #text = 'Seria do genero diversão esse filme avatar?'
 
-#results = search(text)
-#print('Results: ')
-#print(results)
+results = search(text)
+print('Results: ')
+print(results)
 #text = 'atores desse primeiro'
 #text = 'suas atrizes'
+text='atores'
 
-#results = search(text)
-#print(results)
+results = search(text,recommendation=True)
+print(results)
 
 #Atores de avatar
 #suas atrizes (avatar)
