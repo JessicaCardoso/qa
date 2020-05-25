@@ -49,12 +49,30 @@ def remove_duplicated_relations(relations):
       filtered_relations.append(relations[i])
   return filtered_relations
 
+def get_relation(triple):
+  if(triple[0] not in constants.PERSON and
+    triple[0] not in constants.MOVIE_SERIE and
+    triple[0] not in constants.OTHERS ):
+    return None
+  if(triple[2] not in constants.PERSON and
+    triple[2] not in constants.MOVIE_SERIE and
+    triple[2] not in constants.OTHERS):
+    return None
+
+  for t in constants.TRIPLES_MOVIE:
+      if(triple[2] == t[2]):
+        return t[1]
+  for t in constants.TRIPLES_PERSON:
+      if(triple[2] == t[2]):
+        return t[1]
 
 def extend_triples(tuples,entities,uris):
+  print("Extending Triples")
   new_tuples=[]
   for triple in tuples:
     if(triple[2].startswith('genre_')):
-      new_tuples.append((triple[0],'has_genre','genre'))
+      if(triple[0]!='genre'):
+        new_tuples.append((triple[0],'has_genre','genre'))
       new_tuples.append(('genre','has_value',triple[2]))
     elif(triple[2].startswith('territory_')):
       if(triple[0]=='movie' or triple[0]=='serie'):
@@ -71,55 +89,65 @@ def extend_triples(tuples,entities,uris):
         if(triple[0] in constants.PERSON or triple[0] in constants.MOVIE_SERIE ):
           new_tuples.append((triple[0],'has_award','award'))
     else:
-      if(triple[0] == 'person'):
-        for uri in uris:
-          new_tuples.append(('person', 'has_value', uri[0]))
+      rel = get_relation(triple)
 
-      elif(triple[0] in constants.PERSON):
-        cond=False
-        for t in constants.TRIPLES_PERSON:
-          if(triple[2]==t[2]):
-            cond=True
-            new_tuples.append((triple[0], t[1], triple[2]))
-        if(cond==False):
-          #uris = get_person_uri(triple[2])
-          for uri in uris:
-            if(triple[0].lower()==uri[1].lower()):
-              new_tuples.append((triple[0], 'has_value', uri[0]))
-      elif(triple[0] in constants.MOVIE_SERIE):
-        cond=False
-        for t in constants.TRIPLES_MOVIE:
-          if(triple[2]==t[2]):
-            cond=True
-            new_tuples.append((triple[0], t[1], triple[2]))
-        if(cond==False):
-          #we have already found uris from movie
-          if(len(uris)>0):
-            #uris = get_uri_from_movie_serie(triple[2])
-            print('movies uris: ')
-            print(uris)
-            #if(triple[0].lower()==uris[0].lower()):
-              #print(uris)Estou colocando todas as uris com esse titulo
-            for uri in uris:
-              new_tuples.append((triple[0], 'has_value', uri[0]))
-          else:
-            print('finding uris in extend_triples')
-            uris = get_uri_from_movie_serie(triple[2])
-            print(uris)
-            for uri in uris[1]:
-              new_tuples.append((triple[0], 'has_value', uri))
-          
-
+      print('relation: ',rel)
+      if(rel is None):
+        print('triple has person name or title')
+        print('Current triple: ',triple)
+        #entidades
+        for ent in entities:
+          if(ent['value']==triple[0] or ent['value']==triple[2]):
+            if 'uris' in ent:
+              print(ent['uris'])
+              if(ent['uris'][0]=='movie' or ent['uris'][0]=='serie'):
+                rel = get_relation([ent['uris'][0],'',triple[2]])
+                #Bugfix questao 'Indicacoes do filme El Sistema Pelegrin'
+                if(rel == None):
+                  pass
+                else:
+                  new_tuples.append((ent['uris'][0],rel,triple[2]))
+                for uri in ent['uris'][1]:
+                  new_tuples.append([ent['uris'][0], 'has_value', uri])
+              
+              elif(ent['entity']=='person'):
+                print('person triple!')
+                if(triple[0] in constants.PERSON ):
+                  for uri in ent['uris']:
+                    new_tuples.append((triple[0], 'has_value', uri[0]))
+                  
+                elif(triple[0] in constants.MOVIE_SERIE or
+                      triple[0] in constants.OTHERS):
+                  #triple pode ser ['movie', '', 'Angelina'] 
+                  new_tuples.append((triple[0], 'has_person', 'person'))  
+                  for uri in ent['uris']:
+                    new_tuples.append(('person', 'has_value', uri[0]))  
+                else:
+                  #triple pode ser ['Geraldo Rivera', '', 'award'] 
+                  rel = get_relation(['person','',triple[2]])
+                  new_tuples.append(('person', rel, triple[2]))  
+                  for uri in ent['uris']:
+                    new_tuples.append(('person', 'has_value', uri[0]))  
+                
+                  
+              #else:
+              #  caso [['http://www.imdb..', 'Actress'],[['http://www.imdb...', 'Producer']]
+              #  new_tuples.append(('movie','has_person','person'))
+              #  for uri in ent['uris']:
+              #    new_tuples.append(('person', 'has_value', uri[0]))
+              
+            else:
+              #caso que e um title ou people_names, mas
+              #nao foi encontrado esse titulo no bd
+              new_tuples.append([triple[0], 'has_value', triple[2]])
       else:
-        #identificar como titulo de filme,nome de empresa, ou nome de pessoa
-          #bugfix: ajustar entity com  o titulo do filme
-          for ent in entities:
-            if(ent['entity'] == triple[0]):
-              ent['entity'] = 'movie'
-
-        #a=2/0
-        #new_tuples.append(('person', 'has_value', uris[0][0]))
-
+        if(triple[0] in constants.PERSON):
+          print('Triple is some person job')
+          new_tuples.append((triple[0], rel, triple[2]))
+        elif(triple[0] in constants.MOVIE_SERIE):
+          print('Triple is Movie or Serie')
+          #rel = get_relation(triple[2])
+          new_tuples.append((triple[0], rel, triple[2]))      
   return new_tuples
   
 def is_entity(entity):
@@ -136,47 +164,17 @@ def construct_tuples(relations,entities):
   ent_dict = {}
   tuples_relation =[]
   uris = []
-
   values_dict = {}
-
   for ent in entities:
-    if(ent['entity'] == 'people_names'):
-      #checar nome pessoa
-      uris = get_person_uri(ent['value'])
-      
-      #if(len(uris)>=1):
-      tuples_relation.append(('person','',ent['value']))
-      values_dict[ent['value']] = 'person'
-        #é pessoa!
-        #for uri in uris:
-        #  tuples_relation.append((uri[1],'', ent['value'] ))
-
-    elif(not is_entity(ent['entity'])):
-      print('checking what entity is')
-      print(ent['entity'])
-      #checar nome pessoa
-      uris = get_person_uri(ent['entity'])
-      
-      if(len(uris)>=1):
-        #é pessoa!
-        for uri in uris:
-          tuples_relation.append((uri[1],'', ent['value'] ))
-          values_dict[ent['value']] = 'person'
-      
-      #checar titulo filme
-      uris = get_uri_from_movie_serie(ent['entity'])
-      if(len(uris[1])>=1):
-        print('uris: ',uris)
-        ent['entity']=uris[0]
-        tuples_relation.append((uris[0], '', ent['value']))
-        
-  for ent in entities:
-    if(ent['entity']=='people_names'):
+    if('uris' in ent):
       pass 
+    elif(ent['entity']=='title'):
+      pass
+    elif(ent['entity']=='people_names'):
+      pass
     else:
       ent_dict[ent['value']] = ent['entity']
-  
-  
+  print('ent_dict: ',ent_dict)
   for rel in relations:
     left_val = rel.split('|')[1]
     right_val = rel.split('|')[2]
@@ -211,6 +209,7 @@ def encode(results,rec_relations):
         "text": "Resultado(s) retornado(s):",
         "related": [],
         "relations":rec_relations,
+        "results":[],
         "eval_options": True
     }
   
@@ -272,9 +271,17 @@ def search(text=''):
   text=clean_word(text)
 
   entities_rasa = interpreter.parse(text)
+  print('Raw Entities:')
   pprint(entities_rasa)
 
+  intent = entities_rasa['intent']['name']
+  if(intent =='property_by_movie_series'):
+    intent = 'select'
+  if(intent =='movies_affirmative_simple'):
+    intent = 'ask'
+
   entities=especify_entities(entities_rasa['entities'])
+  print('Corrected Entities:')
   pprint(entities)
 
   #tratar intencao de contexto
@@ -339,7 +346,7 @@ def search(text=''):
     rec_relations = relation_recommendation(relations_tuples)
     print(rec_relations)
     
-    sparql_query,interest_var = sparql_build(relations_tuples)
+    sparql_query,interest_var = sparql_build(relations_tuples,spql_type=intent)
     print(sparql_query,interest_var)
 
     try:
@@ -355,6 +362,7 @@ def search(text=''):
         "text": "Sem resultados.",
         "related": [],
         "relations":[],
+        "results":[],
         "eval_options": True
         }
       return output
@@ -367,8 +375,6 @@ def search(text=''):
   
   relations_tuples,uris=construct_tuples(pred_relations,entities)
   print('tuples before: ',relations_tuples)
-  print('Correct entities: ')
-  pprint(entities)
   
   raw_relations_tuples = copy.deepcopy(relations_tuples)
 
@@ -378,7 +384,7 @@ def search(text=''):
   rec_relations = relation_recommendation(relations_tuples)
   print(rec_relations)
   
-  sparql_query,interest_var = sparql_build(relations_tuples)
+  sparql_query,interest_var = sparql_build(relations_tuples,spql_type=intent)
   print(sparql_query,interest_var)
   #return entities_rasa['intent']['name'],entities,relations_tuples,interest_var
   
@@ -396,32 +402,39 @@ def search(text=''):
         "text": "Sem resultados.",
         "related": [],
         "relations":[],
+        "results":[],
         "eval_options": True
         }
     return output
     
-
+#funciona
+#text= 'premios do Avatar'
+#text = 'atores que ganharam o oscar'
+#text = 'atores que foram indicados ao oscar'
+text = 'me diga a premiacao da atriz Angelina Jolie'
+#text = 'Me diga filmes da Angelina Jolie'
+#text = 'Me diga filmes da atriz Angelina Jolie'
+#text = 'filmes que ganharam o oscar'
 #text = 'Indicações do filme El Sistema Pelegrin'
 #text='O filme The Vampire obteve que premiação?'
 #text = 'O Ator Geraldo Rivera do filme Volver ganhou o que.'
-#text = 'me diga a premiacao da atriz Angelina Jolie'
-#text = 'me diga a premiacao do Geraldo Rivera'
-#text = 'atores que ganharam o oscar'
-#text = 'atores que foram indicados ao oscar'
-text = 'filmes que ganharam o oscar'
-#text= 'premios do avatar'
-text = 'Me diga filmes da Angelina Jolie'
-#text = 'Me diga filmes da atriz Angelina Jolie'
-
 #text = 'Me mande filmes de crime'
+#text = 'me diga a premiacao do Geraldo Rivera'
+
+###########testando##################
+#text= 'quais os filmes do genero diversão'
+#text='atrizes de avatar'
+#Intent:: ask
+#text = 'Seria Angelina Jolie uma atriz'
+#text = 'Seria do genero diversão esse filme avatar?'
 
 results = search(text)
 print(results)
-text = 'atores desse primeiro'
+#text = 'atores desse primeiro'
 #text = 'suas atrizes'
 
-results = search(text)
-print(results)
+#results = search(text)
+#print(results)
 
 #Atores de avatar
 #suas atrizes (avatar)
