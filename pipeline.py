@@ -5,6 +5,7 @@ import copy
 from sparql_builder import sparql_build,constants
 from SPARQLWrapper import SPARQLWrapper, JSON
 import pickle
+import traceback
 import context
 
 #re_model = ClassificationModel('roberta', '/content/drive/My Drive/NLP/RE_models', args={})
@@ -94,7 +95,7 @@ def extend_triples(tuples,entities,uris):
       print('relation: ',rel)
       if(rel is None):
         print('triple has person name or title')
-        print('Current triple: ',triple)
+        print(triple)
         #entidades
         for ent in entities:
           if(ent['value']==triple[0] or ent['value']==triple[2]):
@@ -111,24 +112,14 @@ def extend_triples(tuples,entities,uris):
                   new_tuples.append([ent['uris'][0], 'has_value', uri])
               
               elif(ent['entity']=='person'):
-                print('person triple!')
-                if(triple[0] in constants.PERSON ):
-                  for uri in ent['uris']:
-                    new_tuples.append((triple[0], 'has_value', uri[0]))
-                  
-                elif(triple[0] in constants.MOVIE_SERIE or
-                      triple[0] in constants.OTHERS):
-                  #triple pode ser ['movie', '', 'Angelina'] 
+                print('person uris:')
+                if(triple[0] not in constants.PERSON ):
                   new_tuples.append((triple[0], 'has_person', 'person'))  
                   for uri in ent['uris']:
                     new_tuples.append(('person', 'has_value', uri[0]))  
                 else:
-                  #triple pode ser ['Geraldo Rivera', '', 'award'] 
-                  rel = get_relation(['person','',triple[2]])
-                  new_tuples.append(('person', rel, triple[2]))  
                   for uri in ent['uris']:
-                    new_tuples.append(('person', 'has_value', uri[0]))  
-                
+                    new_tuples.append((triple[0], 'has_value', uri[0]))
                   
               #else:
               #  caso [['http://www.imdb..', 'Actress'],[['http://www.imdb...', 'Producer']]
@@ -342,6 +333,7 @@ def search(text=''):
     raw_relations_tuples = copy.deepcopy(relations)
     relations_tuples =extend_triples(relations,entities,[])
     print('tuples after: ',relations_tuples)
+    relations_tuples_copy = copy.deepcopy(relations_tuples)
 
     rec_relations = relation_recommendation(relations_tuples)
     print(rec_relations)
@@ -351,19 +343,17 @@ def search(text=''):
 
     try:
       results = run_sparql(sparql_query)
-      print(results)
-      data= encode([results],rec_relations)
-      print(data)
-
+      data= encode([results],relations_tuples_copy)
       cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,raw_relations_tuples,results['head']['vars'])
       return data
-    except:
+    except Exception:
+      traceback.print_exc()
       output = {
         "text": "Sem resultados.",
         "related": [],
         "relations":[],
         "results":[],
-        "eval_options": False
+        "eval_options": True
         }
       return output
 
@@ -380,6 +370,7 @@ def search(text=''):
 
   relations_tuples =extend_triples(relations_tuples,entities,uris)
   print('tuples after: ',relations_tuples)
+  relations_tuples_copy = copy.deepcopy(relations_tuples)
 
   rec_relations = relation_recommendation(relations_tuples)
   print(rec_relations)
@@ -390,47 +381,44 @@ def search(text=''):
   
   try:
     results = run_sparql(sparql_query)
-    print(results)
-
-    data= encode([results],rec_relations)
-    print(data)
-
+    data= encode([results],relations_tuples_copy)
     cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,raw_relations_tuples,results['head']['vars'])
     return data
-  except:
+  except Exception:
+    traceback.print_exc()
     output = {
         "text": "Sem resultados.",
         "related": [],
         "relations":[],
         "results":[],
-        "eval_options": False
+        "eval_options": True
         }
     return output
     
 #funciona
-#text= 'premios do Avatar'
-#text= 'premios de Avatar.'
-
+text= 'premios do Avatar'
 #text = 'atores que ganharam o oscar'
 #text = 'atores que foram indicados ao oscar'
 #text = 'me diga a premiacao da atriz Angelina Jolie'
-#text = 'Me diga filmes da Angelina Jolie'
+text = 'Me diga filmes da Angelina Jolie'
 #text = 'Me diga filmes da atriz Angelina Jolie'
 #text = 'filmes que ganharam o oscar'
 #text = 'Indicações do filme El Sistema Pelegrin'
 #text='O filme The Vampire obteve que premiação?'
 #text = 'O Ator Geraldo Rivera do filme Volver ganhou o que.'
-#text = 'Me mande filmes de crime'
+
 #text = 'me diga a premiacao do Geraldo Rivera'
 
-###########testando##################
+#text = 'Me mande filmes de crime'
 #text= 'quais os filmes do genero diversão'
 #text='atrizes de avatar'
+
 #Intent:: ask
 #text = 'Seria Angelina Jolie uma atriz'
 #text = 'Seria do genero diversão esse filme avatar?'
 
 #results = search(text)
+#print('Results: ')
 #print(results)
 #text = 'atores desse primeiro'
 #text = 'suas atrizes'
