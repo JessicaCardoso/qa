@@ -34,11 +34,11 @@ class Context():
 
 		#'atores desse primeiro'
 		#ou originalmente: Os atores de Avatar
-		if(intent=='context'):
-			pass
+		#if(intent=='context'):
+		#	pass
 
-		if(intent=='property_by_movie_series'):
-			self.history.append((interest_var,entities,relations,data_results))
+		#if(intent=='property_by_movie_series'):
+		self.history.append((interest_var,entities,relations,data_results))
 		print("History: ")
 		print(self.history[self.turn])
 
