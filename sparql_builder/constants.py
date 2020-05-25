@@ -23,7 +23,8 @@ OBJ_PROPERTIES ={
     "writtenBy": "{} <http://www.movieontology.org/2009/11/09/movieontology.owl#writtenBy> {}. ",
     "wrote": "{} <http://www.movieontology.org/2009/11/09/movieontology.owl#wrote> {}. ",
     # specials
-    "hasActor": "{} ?has_actor {}. FILTER(?has_actor IN (<http://www.movieontology.org/2009/10/01/movieontology.owl#hasActress>, <http://www.movieontology.org/2009/10/01/movieontology.owl#hasMaleActor>))."
+    "hasActor": "{} ?has_actor {}. FILTER(?has_actor IN (<http://www.movieontology.org/2009/10/01/movieontology.owl#hasActress>, <http://www.movieontology.org/2009/10/01/movieontology.owl#hasMaleActor>)).",
+    "hasPerson": "{} ?has_person {}. FILTER(?has_person IN (<http://www.movieontology.org/2009/10/01/movieontology.owl#hasActress>, <http://www.movieontology.org/2009/10/01/movieontology.owl#hasMaleActor>, <http://www.movieontology.org/2009/10/01/movieontology.owl#Costume_Designer>, <http://www.movieontology.org/2009/10/01/movieontology.owl#Editor>, <http://dbpedia.org/page/Film_Director>, <http://dbpedia.org/ontology/Musical_Artist>, <http://www.movieontology.org/2009/10/01/movieontology.owl#Producer>, <http://dbpedia.org/ontology/Writer>))."
 }
 
 DATA_PROPERTIES={
@@ -299,6 +300,7 @@ NER_ENTITIES_MAP = {
     "has_release_date": "releasedate",
     "has_title": "title",
     "has_value": "has_value",
+    "has_person":"hasPerson"
 
 }
 
@@ -351,6 +353,7 @@ TRIPLES_MOVIE = [
  ('movie', 'has_filming_location', 'location'),
  ('movie', 'has_runtime', 'runtime'),
  ('movie', 'has_release_date', 'release_date'),
+ ('movie', 'has_person', 'person'),
  
 
 ]
@@ -363,11 +366,15 @@ TRIPLES_PERSON = [
 ]
 
 PERSON = [
-          "actor", "actress", "writer", "costume_designer", "diretor", 'editor'
+          "person","actor", "actress", "writer", "costume_designer", "diretor", 'editor'
 ]
 
 MOVIE_SERIE = [
         "movie","series"
+]
+
+OTHERS = [
+        "nomination","award","runtime","gross","title","releasedate","productionStartYear","indicationDate","imdbrating","countryCode","companyName","budget","birthName","birthDate"
 ]
 
 ENTITY_TO_URI={
