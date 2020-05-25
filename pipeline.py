@@ -343,7 +343,7 @@ def search(text=''):
 
     try:
       results = run_sparql(sparql_query)
-      data= encode([results],relations_tuples_copy)
+      data= encode([results],rec_relations)
       cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,raw_relations_tuples,results['head']['vars'])
       return data
     except Exception:
@@ -381,7 +381,7 @@ def search(text=''):
   
   try:
     results = run_sparql(sparql_query)
-    data= encode([results],relations_tuples_copy)
+    data= encode([results],rec_relations)
     cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,raw_relations_tuples,results['head']['vars'])
     return data
   except Exception:
