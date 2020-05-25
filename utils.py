@@ -71,23 +71,48 @@ def clean_word(palavra):
     palavraSemAcento = u"".join([c for c in nfkd if not unicodedata.combining(c)])
 
     # Usa expressÃ£o regular para retornar a palavra apenas com nÃºmeros, letras e espaÃ§o
-    return re.sub('[^a-zA-Z0-9 \\\]', '', palavraSemAcento)
+    r=re.sub('[^a-zA-Z0-9 \\\]', '', palavraSemAcento)
+    return r
 
 def especify_entities(entities):
+  print('Specify Entities')
   for ent in entities:
+    print('checking what entity is this value: ',ent['value'])
+    if(ent['value'] in entities_dict):
+      ent['entity'] = entities_dict[ent['value']]
     if(ent['entity']=='genre_name' or ent['entity']=='staff_ent' or ent['entity']=='property_ent'):
-      ent['entity'] = entities_dict[clean_word(ent['value'])]
-    if(ent['entity']=='filme_serie'):
-      ent['entity'] = entities_dict[clean_word(ent['value'])]
+      print(clean_word(ent['value']))
+      ent['entity'] = entities_dict[clean_word(ent['value']).lower()]
     if(ent['entity']=='awards'):
-      ent['entity'] = entities_dict[clean_word(ent['value'])]
-    if(ent['entity']=='title'):
-      ent['entity'] = clean_word(ent['value'])
-    if(ent['entity']=='people_names'):
-      pass    
+      ent['entity'] = entities_dict[clean_word(ent['value']).lower()]
+    if(ent['entity']=='award'):
+      pass
+    else:
+      
+      #checar nome pessoa
+      
+      #print(ent['value'])
+      uris = get_person_uri(ent['value'])
+      
+      if(len(uris)>=1):
+        print('entity is a person')
+        print(uris)
+        ent['entity']='person'
+        ent['uris']=uris
+      else:
+        #checar titulo filme
+        uris = get_uri_from_movie_serie(ent['value'])
+        #print(uris)
+        if(len(uris[1])>=1):
+          #print('entity is a movie')
+          ent['entity']=uris[0]
+          ent['uris']=uris
 
-    
-
+      #restante dos nao especificados  
+      #if(ent['entity']=='title'):
+      #    ent['entity']='movie'
+      #if(ent['entity']=='people_names'):
+      #    ent['entity']='person'
   return entities
 
 
