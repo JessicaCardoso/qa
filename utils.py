@@ -27,20 +27,20 @@ with open(data_path+"production_company_df.dat", "rb") as f:
 
 
 def get_uri_from_movie_serie(title):
-    results = movies.loc[movies['title']==title]
+    results = movies.loc[movies['title'].str.lower()==title.lower()]
     if not results.empty:
         return "movie", results["uri"].tolist()
     else:
-        results = series.loc[series['title']==title]
+        results = series.loc[series['title'].str.lower()==title.lower()]
         return "serie", results["uri"].tolist()
 
 def get_company_uri(name):
-    results = company.loc[company['name']==name]
+    results = company.loc[company['name'].str==name.lower()]
     return results["uri"].tolist()
 
 
 def get_person_uri(birth_name):
-    df = person.loc[person["birthName"]==birth_name]
+    df = person.loc[person["birthName"].str.lower()==birth_name.lower()]
     results = []
     for index, row in df.iterrows():
         staff_pos = re.search(r"\w*_*-*\w*$", row["type"], re.IGNORECASE).group()
@@ -48,7 +48,7 @@ def get_person_uri(birth_name):
     try:
       n1,n2=birth_name.split(' ')
       birth_name2=n2+', '+n1
-      df = person.loc[person["birthName"]==birth_name2]
+      df = person.loc[person["birthName"].str.lower()==birth_name2.lower()]
       for index, row in df.iterrows():
           staff_pos = re.search(r"\w*_*-*\w*$", row["type"], re.IGNORECASE).group()
           results.append([row["uri"], staff_pos])
