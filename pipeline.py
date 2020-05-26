@@ -271,6 +271,16 @@ def get_context_related(interest_entities,cont):
     for ent in hist[1]:
       for interest_entity in interest_entities:
         print(interest_entity['entity'],ent['entity'])
+        #We have to exclude the entities that have
+        #been asked before.
+        #Ex: user ask award from movie. Now he ask the actos.
+        #We have to exclude 'award' from the context, as
+        #it does not interest us, and keep 'movie' only.
+        if('_value' in hist[0][0]): 
+          asked_entity =hist[0][0][:-6] 
+        else:
+          asked_entity =hist[0][0]
+        print(asked_entity)
         if is_domain(interest_entity['entity'],ent['entity'],cont):
           print('Is domain!!')
           #context_entities.append(ent['entity'])
@@ -283,30 +293,28 @@ def get_context_related(interest_entities,cont):
             #print(hist[0][0])
             for h in hist[2]:
               print('h: ',h)
-              h00 =hist[0][0][:-6] 
-              print(h00)
-              if(h[0] != h00 and h[2] != h00):
+              if(h[0] != asked_entity and h[2] != asked_entity):
                 relations.append(h)
             cond=False
-          question_triple = [ent['entity'],'',interest_entity['entity']]
-          print("relation triple: ",question_triple)
-          rec = get_relation(question_triple)
-          relations.append((question_triple[0],rec,question_triple[2]))
+          if(interest_entity['entity']!=asked_entity):
+            question_triple = [ent['entity'],'',interest_entity['entity']]
+            print("relation triple: ",question_triple)
+            rec = get_relation(question_triple)
+            relations.append((question_triple[0],rec,question_triple[2]))
         
         elif(is_domain(ent['entity'],interest_entity['entity'],cont)):
           print('Is counter domain!!')
           if(cond):
             for h in hist[2]:
               print('h: ',h)
-              h00 =hist[0][0][:-6] 
-              print(h00)
-              if(h[0] != h00 and h[2] != h00):
+              if(h[0] != asked_entity and h[2] != asked_entity):
                 relations.append(h)
             cond=False
-          question_triple = [interest_entity['entity'],'',ent['entity']]
-          print("relation triple: ",question_triple)
-          rec = get_relation(question_triple)
-          relations.append((question_triple[0],rec,question_triple[2]))
+          if(ent['entity']!=asked_entity):
+            question_triple = [interest_entity['entity'],'',ent['entity']]
+            print("relation triple: ",question_triple)
+            rec = get_relation(question_triple)
+            relations.append((question_triple[0],rec,question_triple[2]))
   return relations
 
 import copy
@@ -315,7 +323,10 @@ interpreter = Interpreter.load('models/')
 cont = context.Context()
 
 
-def search(text='',save_context_context=False):
+def search(text='',id_client='0',id_hist='0',save_context_context=False):
+
+  #load context
+  #cont = pickle.load(open())
 
   text=clean_word(text)
 
@@ -459,7 +470,9 @@ def search(text='',save_context_context=False):
 #text = 'Seria Angelina Jolie uma atriz'
 #text = 'Seria do genero diversão esse filme avatar?'
 
-"""
+
+
+
 #Cenario 3: Contexto
 text='premiacao de Avatar'
 
@@ -481,10 +494,16 @@ print(results)
 text='seus diretores'
 results = search(text)
 print(results)
+text='suas indicações'
+results = search(text)
+print(results)
+text='seus generos'
+results = search(text)
+print(results)
 
 #premio do primeiro (atrizes)
 #preimio do primeiro ator (ator)
-"""
+
 
 """
 #Cenario 3.1: Contexto
