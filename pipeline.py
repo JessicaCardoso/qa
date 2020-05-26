@@ -195,13 +195,14 @@ def run_sparql(sparql_query):
   print(len(results["results"]["bindings"]))
   return results
 
-def encode(results,rec_relations):
+def encode(results,rec_relations,entities):
   data=[]
   output = {
         "text": "Resultado(s) retornado(s):",
         "related": [],
         "relations":rec_relations,
         "results":[],
+        "entities":entities
         "eval_options": True
     }
   
@@ -225,6 +226,11 @@ def is_domain(x,y,context):
     domains = context.domain_dict[x]
     if(y in domains):
       return True
+    #tratar person
+    #if(x in constants.PERSON):
+    #  domains = context.domain_dict['person']
+    #  if(y in domains):
+    #    return True
   return False 
 
 def relation_recommendation(relations):
@@ -353,7 +359,7 @@ def search(text='',save_context_context=False):
 
     try:
       results = run_sparql(sparql_query)
-      data= encode([results],rec_relations)
+      data= encode([results],rec_relations,entities)
       if(save_context_context):
         cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,results['head']['vars'])
       return data
@@ -364,6 +370,7 @@ def search(text='',save_context_context=False):
         "related": [],
         "relations":[],
         "results":[],
+        "entities":[],
         "eval_options": False
         }
       return output
@@ -392,7 +399,7 @@ def search(text='',save_context_context=False):
   
   try:
     results = run_sparql(sparql_query)
-    data= encode([results],rec_relations)
+    data= encode([results],rec_relations,entities)
     cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,results['head']['vars'])
     return data
   except Exception:
@@ -402,13 +409,14 @@ def search(text='',save_context_context=False):
         "related": [],
         "relations":[],
         "results":[],
+        "entities":[],
         "eval_options": False
         }
     return output
     
 #funciona
 #text= 'premios do avatar'
-#text = 'atores que ganharam o oscar'
+text = 'atores que ganharam o oscar'
 #text = 'atores que foram indicados ao oscar'
 #text = 'me diga a premiacao da atriz Angelina Jolie'
 #text = 'Me diga filmes da Angelina Jolie'
@@ -428,12 +436,6 @@ def search(text='',save_context_context=False):
 #Intent:: ask
 #text = 'Seria Angelina Jolie uma atriz'
 #text = 'Seria do genero diversão esse filme avatar?'
-
-#results = search(text)
-#print(results)
-
-
-
 
 
 """
