@@ -375,7 +375,7 @@ MOVIE_SERIE = [
 ]
 
 OTHERS = [
-        "nomination","award","runtime","gross","title","releasedate","productionStartYear","indicationDate","imdbrating","countryCode","companyName","budget","birthName","birthDate"
+        "genre","nomination","award","runtime","gross","title","releasedate","productionStartYear","indicationDate","imdbrating","countryCode","companyName","budget","birthName","birthDate"
 ]
 
 ENTITY_TO_URI={
