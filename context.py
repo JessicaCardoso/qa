@@ -21,7 +21,7 @@ class Context():
                         'location_company': ['movie'],
                         'movie': ['sound_mix'],
                         'musical_artist': ['movie', 'series'],
-                        'person': ['award'],
+                        #'person': ['award'],
                         'place': ['movie'],
                         'production_company': ['location_company', 'territory'],
                         'sound_mix': ['series', 'movie'],
