@@ -15,7 +15,7 @@ class Context():
                         'consumable_product': ['series', 'movie'],
                         'costume_designer': ['series', 'movie'],
                         'editor': ['movie', 'series'],
-                        'film_director': ['movie', 'series'],
+                        'director': ['movie', 'series'],
                         'genre': ['movie', 'series'],
                         'language': ['movie', 'series'],
                         'location_company': ['movie'],
