@@ -12,7 +12,7 @@ import context
 re_model = ClassificationModel('roberta', 'RE_models', use_cuda=False)
 entities_dict = pickle.load( open( "entities_dict.p", "rb" ) )
 
-interest_var_dict={'movie_value':'movie'}
+#interest_var_dict={'movie_value':'movie'}
 login = "dslab"
 password = "DSLABm3d3ixa3ntrar" 
 
@@ -226,11 +226,15 @@ def is_domain(x,y,context):
     domains = context.domain_dict[x]
     if(y in domains):
       return True
+
     #tratar person
-    #if(x in constants.PERSON):
-    #  domains = context.domain_dict['person']
-    #  if(y in domains):
-    #    return True
+    if(x!='person'):
+      if(x in constants.PERSON):
+        return is_domain('person',y,context)
+    if(y!='person'):
+      if(y in constants.PERSON):
+        return is_domain(x,'person',context)
+    
   return False 
 
 def relation_recommendation(relations):
@@ -279,10 +283,27 @@ def get_context_related(interest_entities,cont):
             #print(hist[0][0])
             for h in hist[2]:
               print('h: ',h)
-              if(h[0]!=hist[0][0] and h[2]!=hist[0][0]):
+              h00 =hist[0][0][:-6] 
+              print(h00)
+              if(h[0] != h00 and h[2] != h00):
                 relations.append(h)
             cond=False
           question_triple = [ent['entity'],'',interest_entity['entity']]
+          print("relation triple: ",question_triple)
+          rec = get_relation(question_triple)
+          relations.append((question_triple[0],rec,question_triple[2]))
+        
+        elif(is_domain(ent['entity'],interest_entity['entity'],cont)):
+          print('Is counter domain!!')
+          if(cond):
+            for h in hist[2]:
+              print('h: ',h)
+              h00 =hist[0][0][:-6] 
+              print(h00)
+              if(h[0] != h00 and h[2] != h00):
+                relations.append(h)
+            cond=False
+          question_triple = [interest_entity['entity'],'',ent['entity']]
           print("relation triple: ",question_triple)
           rec = get_relation(question_triple)
           relations.append((question_triple[0],rec,question_triple[2]))
@@ -340,7 +361,7 @@ def search(text='',save_context_context=False):
                 interest_var=hist[0][0]
                 #print(hist[3]['results']) 
                 results=hist[3]['results'][interest_var]
-                context_interest_var = interest_var_dict[interest_var]
+                context_interest_var = interest_var
                 relations.append([context_interest_var,'',results[ref]])
                 relations.append([context_interest_var,'',interest_entity['entity']])
                 print('relations: ',relations)
@@ -348,6 +369,7 @@ def search(text='',save_context_context=False):
 
                 raw_relations_tuples = copy.deepcopy(relations)
                 relations_tuples =extend_triples(relations,entities,[])
+                relations_tuples = remove_duplicated_relations(relations_tuples)
                 print('tuples after: ',relations_tuples)
                 relations_tuples_copy = copy.deepcopy(relations_tuples)
 
@@ -387,6 +409,7 @@ def search(text='',save_context_context=False):
   raw_relations_tuples = copy.deepcopy(relations_tuples)
 
   relations_tuples =extend_triples(relations_tuples,entities,uris)
+  relations_tuples = remove_duplicated_relations(relations_tuples)
   print('tuples after: ',relations_tuples)
   relations_tuples_copy = copy.deepcopy(relations_tuples)
 
@@ -416,7 +439,6 @@ def search(text='',save_context_context=False):
     
 #funciona
 #text= 'premios do avatar'
-text = 'atores que ganharam o oscar'
 #text = 'atores que foram indicados ao oscar'
 #text = 'me diga a premiacao da atriz Angelina Jolie'
 #text = 'Me diga filmes da Angelina Jolie'
@@ -436,7 +458,6 @@ text = 'atores que ganharam o oscar'
 #Intent:: ask
 #text = 'Seria Angelina Jolie uma atriz'
 #text = 'Seria do genero diversão esse filme avatar?'
-
 
 """
 #Cenario 3: Contexto
@@ -463,4 +484,17 @@ print(results)
 
 #premio do primeiro (atrizes)
 #preimio do primeiro ator (ator)
+"""
+
+"""
+#Cenario 3.1: Contexto
+
+text = 'atores que ganharam o oscar'
+
+results = search(text)
+print(results)
+
+text = 'atrizes'
+results = search(text)
+print(results)
 """
