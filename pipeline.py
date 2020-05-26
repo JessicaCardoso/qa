@@ -251,6 +251,10 @@ def relation_recommendation(relations):
             print("Error! Entidade n esta no dict!!")
             print(correct_entity)
             return relations
+        elif(t in constants.GENRE_MAP):
+          correct_entity = constants.GENRE_MAP[t][0]
+          new_triple.append(correct_entity)
+          
         else:
             print("Error! Entidade n esta no dict!!")
             print(t)
@@ -425,7 +429,7 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
   relations_tuples_copy = copy.deepcopy(relations_tuples)
 
   rec_relations = relation_recommendation(relations_tuples)
-  print(rec_relations)
+  print('Relations for recommendation:',rec_relations)
   
   sparql_query,interest_var = sparql_build(relations_tuples,spql_type=intent)
   print(sparql_query,interest_var)
@@ -471,6 +475,7 @@ text= 'Filmes de comédia.'
 #Intent:: ask
 #text = 'Seria Angelina Jolie uma atriz'
 #text = 'Seria do genero diversão esse filme avatar?'
+
 
 """
 #Cenario 3: Contexto
