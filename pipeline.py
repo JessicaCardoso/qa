@@ -286,42 +286,13 @@ interpreter = Interpreter.load('models/')
 cont = context.Context()
 
 
-def search(text='',recommendation=False):
+def search(text=''):
 
   text=clean_word(text)
 
   entities_rasa = interpreter.parse(text)
   print('Raw Entities:')
   pprint(entities_rasa)
-
-  if(recommendation):
-    entities=especify_entities(entities_rasa['entities'])
-    print('Corrected Entities:')
-    pprint(entities)
-    relations_tuples = get_context_related(entities,cont)
-    print('new relations: ',relations_tuples)
-    
-    rec_relations = relation_recommendation(relations_tuples)
-    print(rec_relations)
-    
-    sparql_query,interest_var = sparql_build(relations_tuples)
-    print(sparql_query,interest_var)
-
-    try:
-      results = run_sparql(sparql_query)
-      data= encode([results],rec_relations)
-      cont.set_current_turn_results(text,data,'rec',entities,relations_tuples,results['head']['vars'])
-      return data
-    except Exception:
-      traceback.print_exc()
-      output = {
-        "text": "Sem resultados.",
-        "related": [],
-        "relations":[],
-        "results":[],
-        "eval_options": True
-        }
-      return output
 
 
   intent = entities_rasa['intent']['name']
@@ -390,7 +361,7 @@ def search(text='',recommendation=False):
         "related": [],
         "relations":[],
         "results":[],
-        "eval_options": True
+        "eval_options": False
         }
       return output
 
@@ -428,7 +399,7 @@ def search(text='',recommendation=False):
         "related": [],
         "relations":[],
         "results":[],
-        "eval_options": True
+        "eval_options": False
         }
     return output
     
