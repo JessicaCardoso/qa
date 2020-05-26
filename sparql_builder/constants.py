@@ -278,7 +278,7 @@ NER_ENTITIES_MAP = {
     "has_company_location": "hasCompanyLocation",
     "has_designer": "hasCostumeDesigner",
     "has_director": "hasDirector",
-    "has_editor": "has_editor",
+    "has_editor": "hasEditor",
     "has_producer": "hasProducer",
     "has_company": "isProducedBy",
     "has_nomination": "nominatedFor",
@@ -340,7 +340,7 @@ TRIPLES_MOVIE = [
  ('movie', 'has_male_actor', 'actor'),
  ('movie', 'has_nomination', 'nomination'),
  ('movie', 'has_production_start_year', 'start_year'),
- ('movie', 'has_director', 'film_director'),
+ ('movie', 'has_director', 'director'),
  ('movie', 'has_genre', 'genre'),
  ('movie', 'has_actress', 'actress'),
  ('movie', 'has_designer', 'costume_designer'),
@@ -362,11 +362,12 @@ TRIPLES_PERSON = [
  ('person', 'has_indication_date', 'indication_date'),
  ('person', 'has_nomination', 'nomination'),
  ('person', 'has_birth_date', 'birth_date'),
+ 
 
 ]
 
 PERSON = [
-          "person","actor", "actress", "writer", "costume_designer", "diretor", 'editor'
+          "actor", "actress", "writer", "costume_designer", "director", "editor","producer"
 ]
 
 MOVIE_SERIE = [
