@@ -51,6 +51,7 @@ def remove_duplicated_relations(relations):
   return filtered_relations
 
 def get_relation(triple):
+  
   if(triple[0] not in constants.PERSON and
     triple[0] not in constants.MOVIE_SERIE and
     triple[0] not in constants.OTHERS ):
@@ -276,6 +277,7 @@ def get_context_related(interest_entities,cont):
                 relations.append(h)
             cond=False
           question_triple = [ent['entity'],'',interest_entity['entity']]
+          print("relation triple: ",question_triple)
           rec = get_relation(question_triple)
           relations.append((question_triple[0],rec,question_triple[2]))
   return relations
@@ -406,12 +408,12 @@ def search(text='',save_context_context=False):
     
 #funciona
 #text= 'premios do avatar'
-#text='premiacao de Avatar'
 #text = 'atores que ganharam o oscar'
 #text = 'atores que foram indicados ao oscar'
 #text = 'me diga a premiacao da atriz Angelina Jolie'
 #text = 'Me diga filmes da Angelina Jolie'
-text = 'Me diga filmes da atriz Angelina Jolie'
+#filtrar atriz
+#text = 'Me diga filmes da atriz Angelina Jolie'
 #text = 'filmes que ganharam o oscar'
 #text = 'Indicações do filme El Sistema Pelegrin'
 #text='O filme The Vampire obteve que premiação?'
@@ -427,15 +429,36 @@ text = 'Me diga filmes da atriz Angelina Jolie'
 #text = 'Seria Angelina Jolie uma atriz'
 #text = 'Seria do genero diversão esse filme avatar?'
 
-#text = 'atores desse primeiro'
-#text = 'suas atrizes'
-#text='atrizes'
-
 #results = search(text)
 #print(results)
 
-#Atores de avatar
-#suas atrizes (avatar)
-#seus premios (avatar)
+
+
+
+
+"""
+#Cenario 3: Contexto
+text='premiacao de Avatar'
+
+results = search(text)
+print('Results: ')
+print(results)
+#text = 'atores desse primeiro'
+text = 'seus editores'
+#
+results = search(text)
+print(results)
+
+text='suas atrizes'
+results = search(text)
+print(results)
+text='seus atores'
+results = search(text)
+print(results)
+text='seus diretores'
+results = search(text)
+print(results)
+
 #premio do primeiro (atrizes)
 #preimio do primeiro ator (ator)
+"""
