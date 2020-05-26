@@ -286,7 +286,7 @@ interpreter = Interpreter.load('models/')
 cont = context.Context()
 
 
-def search(text=''):
+def search(text='',save_context_context=False):
 
   text=clean_word(text)
 
@@ -352,7 +352,8 @@ def search(text=''):
     try:
       results = run_sparql(sparql_query)
       data= encode([results],rec_relations)
-      cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,results['head']['vars'])
+      if(save_context_context):
+        cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,results['head']['vars'])
       return data
     except Exception:
       traceback.print_exc()
@@ -404,8 +405,9 @@ def search(text=''):
     return output
     
 #funciona
-text= 'premios do Avatar'
-#text = 'atores que ganharam o oscar'
+#text= 'premios do avatar'
+#text='premiacao de Avatar'
+text = 'atores que ganharam o oscar'
 #text = 'atores que foram indicados ao oscar'
 #text = 'me diga a premiacao da atriz Angelina Jolie'
 #text = 'Me diga filmes da Angelina Jolie'
@@ -425,6 +427,15 @@ text= 'premios do Avatar'
 #text = 'Seria Angelina Jolie uma atriz'
 #text = 'Seria do genero diversão esse filme avatar?'
 
+results = search(text)
+print('Results: ')
+print(results)
+#text = 'atores desse primeiro'
+#text = 'suas atrizes'
+#text='atrizes'
+
+#results = search(text)
+#print(results)
 
 #Atores de avatar
 #suas atrizes (avatar)
