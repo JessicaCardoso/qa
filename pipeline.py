@@ -345,8 +345,8 @@ def search(text='',recommendation=False):
     ref=cont.search_for_numbers(text)
     print(ref)
     if(ref==-1):
-      relations = get_context_related(interest_entities,cont)
-      print('infered relations:',relations)
+      relations_tuples = get_context_related(interest_entities,cont)
+      print('infered relations:',relations_tuples)
 
     else:
       relations=[]
@@ -367,15 +367,15 @@ def search(text='',recommendation=False):
                 print('relations: ',relations)
                 cond=False
 
-    raw_relations_tuples = copy.deepcopy(relations)
-    relations_tuples =extend_triples(relations,entities,[])
-    print('tuples after: ',relations_tuples)
-    relations_tuples_copy = copy.deepcopy(relations_tuples)
+                raw_relations_tuples = copy.deepcopy(relations)
+                relations_tuples =extend_triples(relations,entities,[])
+                print('tuples after: ',relations_tuples)
+                relations_tuples_copy = copy.deepcopy(relations_tuples)
 
     rec_relations = relation_recommendation(relations_tuples)
     print(rec_relations)
     
-    sparql_query,interest_var = sparql_build(relations_tuples,spql_type=intent)
+    sparql_query,interest_var = sparql_build(relations_tuples)
     print(sparql_query,interest_var)
 
     try:
@@ -459,9 +459,9 @@ print('Results: ')
 print(results)
 #text = 'atores desse primeiro'
 #text = 'suas atrizes'
-text='atores'
+text='atrizes'
 
-results = search(text,recommendation=True)
+results = search(text)
 print(results)
 
 #Atores de avatar
