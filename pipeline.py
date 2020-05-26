@@ -472,7 +472,7 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
 
 
 
-
+"""
 #Cenario 3: Contexto
 text='premiacao de Avatar'
 
@@ -503,7 +503,7 @@ print(results)
 
 #premio do primeiro (atrizes)
 #preimio do primeiro ator (ator)
-
+"""
 
 """
 #Cenario 3.1: Contexto
