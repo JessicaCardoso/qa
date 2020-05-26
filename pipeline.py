@@ -202,7 +202,7 @@ def encode(results,rec_relations,entities):
         "related": [],
         "relations":rec_relations,
         "results":[],
-        "entities":entities
+        "entities":entities,
         "eval_options": True
     }
   
