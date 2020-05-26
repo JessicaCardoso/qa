@@ -425,15 +425,6 @@ text= 'premios do Avatar'
 #text = 'Seria Angelina Jolie uma atriz'
 #text = 'Seria do genero diversão esse filme avatar?'
 
-results = search(text)
-print('Results: ')
-print(results)
-#text = 'atores desse primeiro'
-#text = 'suas atrizes'
-text='atrizes'
-
-results = search(text)
-print(results)
 
 #Atores de avatar
 #suas atrizes (avatar)
