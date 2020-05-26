@@ -407,11 +407,11 @@ def search(text='',save_context_context=False):
 #funciona
 #text= 'premios do avatar'
 #text='premiacao de Avatar'
-text = 'atores que ganharam o oscar'
+#text = 'atores que ganharam o oscar'
 #text = 'atores que foram indicados ao oscar'
 #text = 'me diga a premiacao da atriz Angelina Jolie'
 #text = 'Me diga filmes da Angelina Jolie'
-#text = 'Me diga filmes da atriz Angelina Jolie'
+text = 'Me diga filmes da atriz Angelina Jolie'
 #text = 'filmes que ganharam o oscar'
 #text = 'Indicações do filme El Sistema Pelegrin'
 #text='O filme The Vampire obteve que premiação?'
