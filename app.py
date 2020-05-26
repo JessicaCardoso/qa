@@ -25,10 +25,16 @@ class MainClass(Resource):
             400: "Invalid Argument",
             500: "Mapping Key Error",
         },
-        params={"q": "campo referente a pergunta desejada."},
+        params={"q": "campo referente a pergunta desejada.",
+        "uid": "ID do usuário do Telegram.",
+        "hid": "ID do histórico atual do usuário"
+
+        },
     )
     def get(self):
-        return pipeline.search(request.args.get("q"))
+    	print("user_id:", request.args.get("uid"))
+    	print("history_id", request.args.get("hid"))
+    	return pipeline.search(request.args.get("q"))
 
 
 if __name__ == "__main__":
