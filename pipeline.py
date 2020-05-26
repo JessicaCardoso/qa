@@ -450,6 +450,8 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
     
 #funciona
 #text= 'premios do avatar'
+text= 'Filmes de comédia.'
+
 #text = 'atores que foram indicados ao oscar'
 #text = 'me diga a premiacao da atriz Angelina Jolie'
 #text = 'Me diga filmes da Angelina Jolie'
@@ -469,8 +471,6 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
 #Intent:: ask
 #text = 'Seria Angelina Jolie uma atriz'
 #text = 'Seria do genero diversão esse filme avatar?'
-
-
 
 """
 #Cenario 3: Contexto
@@ -514,6 +514,14 @@ results = search(text)
 print(results)
 
 text = 'atrizes'
+results = search(text)
+print(results)
+
+text = 'diretores'
+results = search(text)
+print(results)
+
+text = 'editores'
 results = search(text)
 print(results)
 """
