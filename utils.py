@@ -76,14 +76,21 @@ def clean_word(palavra):
 
 def especify_entities(entities):
   print('Specify Entities')
+  c=-1
+  unk_ents = []
   for ent in entities:
+    c+=1
     print(ent['entity'])
     print('checking what entity is this value: ',ent['value'])
     if(ent['value'] in entities_dict):
       ent['entity'] = entities_dict[ent['value']]
     elif(ent['entity']=='genre_name' or ent['entity']=='staff_ent' or ent['entity']=='property_ent'):
       print(clean_word(ent['value']))
-      ent['entity'] = entities_dict[clean_word(ent['value']).lower()]
+      v=clean_word(ent['value']).lower()
+      if(v in entities_dict):
+        ent['entity'] = entities_dict[v]
+      else:
+        unk_ents.append(c)
     elif(ent['entity']=='awards'):
       ent['entity'] = entities_dict[clean_word(ent['value']).lower()]
     elif(ent['entity']=='award'):
@@ -108,19 +115,30 @@ def especify_entities(entities):
           #print('entity is a movie')
           ent['entity']=uris[0]
           ent['uris']=uris
-
-      #restante dos nao especificados  
-      #if(ent['entity']=='title'):
-      #    ent['entity']='movie'
-      #if(ent['entity']=='people_names'):
-      #    ent['entity']='person'
-  return entities
+        else:
+          print("Entity Unknow!!")
+          print('deleting the entity:')
+          unk_ents.append(c)
+      
+  new_entities=[]
+  for i in range(len(entities)):
+    if(i not in unk_ents):
+      new_entities.append(entities[i])
+  return new_entities
 
 
 def get_relations_queries(rasa_entities):
   relations = []
   text = rasa_entities['text']
   entities = rasa_entities['entities']
+  for i in range(len(entities)):
+    for j in range(len(entities)):
+      if(i!=j):
+        relations.append(text+'|'+entities[i]['value']+'|'+entities[j]['value'])
+  return relations
+
+def get_relations_queries2(text,entities):
+  relations = []
   for i in range(len(entities)):
     for j in range(len(entities)):
       if(i!=j):
