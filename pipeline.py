@@ -1,4 +1,4 @@
-from utils import get_uri_from_movie_serie,clean_word,get_rdfs_label,especify_entities,get_relations_queries,get_person_uri
+from utils import get_uri_from_movie_serie,clean_word,get_rdfs_label,especify_entities,get_relations_queries,get_relations_queries2,get_person_uri
 from pprint import pprint
 from simpletransformers.classification import ClassificationModel
 import copy
@@ -58,7 +58,8 @@ def get_relation(triple):
     return None
   if(triple[2] not in constants.PERSON and
     triple[2] not in constants.MOVIE_SERIE and
-    triple[2] not in constants.OTHERS):
+    triple[2] not in constants.OTHERS and
+    triple[2] not in constants.GENRE_MAP):
     return None
 
   for t in constants.TRIPLES_MOVIE:
@@ -67,6 +68,8 @@ def get_relation(triple):
   for t in constants.TRIPLES_PERSON:
       if(triple[2] == t[2]):
         return t[1]
+  if(triple[0]=='genre' and 'genre_' in triple[2]):
+    return 'has_value'
 
 def extend_triples(tuples,entities,uris):
   print("Extending Triples")
@@ -103,6 +106,7 @@ def extend_triples(tuples,entities,uris):
             if 'uris' in ent:
               print(ent['uris'])
               if(ent['uris'][0]=='movie' or ent['uris'][0]=='serie'):
+                print('entity is movie!')
                 rel = get_relation([ent['uris'][0],'',triple[2]])
                 #Bugfix questao 'Indicacoes do filme El Sistema Pelegrin'
                 if(rel == None):
@@ -111,9 +115,11 @@ def extend_triples(tuples,entities,uris):
                   new_tuples.append((ent['uris'][0],rel,triple[2]))
                 for uri in ent['uris'][1]:
                   new_tuples.append([ent['uris'][0], 'has_value', uri])
+                if(triple[2]=='releasedate'):
+                  new_tuples.append(['movie', 'has_release_date', 'releasedate'])
               
               elif(ent['entity']=='person'):
-                print('person uris:')
+                print('entity is person!')
                 if(triple[0] not in constants.PERSON ):
                   new_tuples.append((triple[0], 'has_person', 'person'))  
                   for uri in ent['uris']:
@@ -121,7 +127,9 @@ def extend_triples(tuples,entities,uris):
                 else:
                   for uri in ent['uris']:
                     new_tuples.append((triple[0], 'has_value', uri[0]))
-                  
+                if(triple[2]=='birthDate'):
+                  new_tuples.append(('person', 'has_birth_date', 'birthDate'))
+                
               #else:
               #  caso [['http://www.imdb..', 'Actress'],[['http://www.imdb...', 'Producer']]
               #  new_tuples.append(('movie','has_person','person'))
@@ -222,6 +230,9 @@ def encode(results,rec_relations,entities):
   return output
 
 def is_domain(x,y,context):
+  #bugfix: casos de genero
+  if('genre_' in x and y in constants.MOVIE_SERIE):
+    return True
   if(x in context.domain_dict):
     domains = context.domain_dict[x]
     if(y in domains):
@@ -270,6 +281,7 @@ def get_context_related(interest_entities,cont):
   print(cont.history)
   relations=[]
   cond=True
+
   #percorrer o historico
   for hist in cont.history:
     for ent in hist[1]:
@@ -284,7 +296,7 @@ def get_context_related(interest_entities,cont):
           asked_entity =hist[0][0][:-6] 
         else:
           asked_entity =hist[0][0]
-        print(asked_entity)
+        print('asked_entity: ',asked_entity)
         if is_domain(interest_entity['entity'],ent['entity'],cont):
           print('Is domain!!')
           #context_entities.append(ent['entity'])
@@ -297,12 +309,32 @@ def get_context_related(interest_entities,cont):
             #print(hist[0][0])
             for h in hist[2]:
               print('h: ',h)
-              if(h[0] != asked_entity and h[2] != asked_entity):
-                relations.append(h)
+              
+              
+              #bugfix: 
+              #h:  ('movie', 'has_genre', 'genre')
+              #h:  ('genre', 'has_value', 'genre_fun')
+              #onde a pergunta pede genre_logical_thrilling,
+              #eliminando o  ('movie', 'has_genre', 'genre') 
+              if('genre_' in interest_entity['entity']):
+                if(h[0] =='movie' and h[2]  =='genre'):
+                  relations.append(h)
+                if( 'genre_' not in h[0] and 'genre_' not in h[2]):
+                  relations.append(h)
+              else:
+                if(h[0] != asked_entity and h[2] != asked_entity):
+                  relations.append(h)
+
             cond=False
           if(interest_entity['entity']!=asked_entity):
             question_triple = [ent['entity'],'',interest_entity['entity']]
             print("relation triple: ",question_triple)
+            
+            #bugfix: questao 'filme de genero X', e 'e genero Y?' 
+            if(('movie' == question_triple[0]) and ('genre_' in question_triple[2]) ):
+              question_triple[0]='genre'              
+            
+            
             rec = get_relation(question_triple)
             relations.append((question_triple[0],rec,question_triple[2]))
         
@@ -344,13 +376,16 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
     intent = 'select'
   if(intent =='movies_affirmative_simple'):
     intent = 'ask'
+  
 
   entities=especify_entities(entities_rasa['entities'])
   print('Corrected Entities:')
   pprint(entities)
+  if(len(entities)==1):
+    intent='context'
 
   #tratar intencao de contexto
-  if(entities_rasa['intent']['name']=='context'):
+  if(intent=='context'):
     print('Inferir de contexto')
     relations=[]
     interest_entities = entities
@@ -361,6 +396,7 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
     print(ref)
     if(ref==-1):
       relations_tuples = get_context_related(interest_entities,cont)
+      relations_tuples = remove_duplicated_relations(relations_tuples)
       print('infered relations:',relations_tuples)
 
     else:
@@ -412,7 +448,8 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
         }
       return output
 
-  queries = get_relations_queries(entities_rasa)
+  #queries = get_relations_queries(entities_rasa)
+  queries = get_relations_queries2(entities_rasa['text'],entities)
   print(queries)
   
   pred_relations=relation_extraction(queries)
@@ -454,7 +491,6 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
     
 #funciona
 #text= 'premios do avatar'
-text= 'Filmes de comédia.'
 
 #text = 'atores que foram indicados ao oscar'
 #text = 'me diga a premiacao da atriz Angelina Jolie'
@@ -465,6 +501,28 @@ text= 'Filmes de comédia.'
 #text = 'Indicações do filme El Sistema Pelegrin'
 #text='O filme The Vampire obteve que premiação?'
 #text = 'O Ator Geraldo Rivera do filme Volver ganhou o que.'
+"""
+#Cenario 1.1: Data properties
+text='qual a data de nascimento de Angelina Jolie'
+results = search(text)
+print(results)
+text='qual o orcamento de Avatar'
+results = search(text)
+print(results)
+text='qual a receita de Avatar'
+results = search(text)
+print(results)
+text='qual a nota de Avatar'
+results = search(text)
+print(results)
+text='qual a estreia de Avatar'
+results = search(text)
+print(results)
+text='qual a duração de Avatar'
+results = search(text)
+print(results)
+"""
+
 
 #text = 'me diga a premiacao do Geraldo Rivera'
 
@@ -478,7 +536,26 @@ text= 'Filmes de comédia.'
 
 
 """
-#Cenario 3: Contexto
+#Cenario 3.1: Contexto 
+text= 'Filmes de comédia.'
+results = search(text)
+#print(results)
+
+text= 'e de violencia.'
+results = search(text)
+print(results)
+
+text= 'me mostre de ação.'
+results = search(text)
+print(results) 
+
+text= 'e tambem de fantasia.'
+results = search(text)
+print(results) 
+"""
+
+"""
+#Cenario 3.2: Contexto 
 text='premiacao de Avatar'
 
 results = search(text)
@@ -511,7 +588,7 @@ print(results)
 """
 
 """
-#Cenario 3.1: Contexto
+#Cenario 3.3: Contexto
 
 text = 'atores que ganharam o oscar'
 
