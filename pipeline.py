@@ -201,6 +201,8 @@ def run_sparql(sparql_query):
   sparql_wrapper.setReturnFormat(JSON)
   results = sparql_wrapper.query().convert()
   print(len(results["results"]["bindings"]))
+  if(len(results["results"]["bindings"])<=0):
+    a=2/0
   return results
 
 def encode(results,rec_relations,entities):
@@ -501,6 +503,12 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
 #text = 'Indicações do filme El Sistema Pelegrin'
 #text='O filme The Vampire obteve que premiação?'
 #text = 'O Ator Geraldo Rivera do filme Volver ganhou o que.'
+
+
+#text='quais as atrizes e atores de Avatar'
+#results = search(text)
+#print(results)
+
 """
 #Cenario 1.1: Data properties
 text='qual a data de nascimento de Angelina Jolie'
@@ -550,6 +558,10 @@ results = search(text)
 print(results) 
 
 text= 'e tambem de fantasia.'
+results = search(text)
+print(results) 
+
+text= 'e me mostre os infantil.'
 results = search(text)
 print(results) 
 """
