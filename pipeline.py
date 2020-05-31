@@ -201,8 +201,6 @@ def run_sparql(sparql_query):
   sparql_wrapper.setReturnFormat(JSON)
   results = sparql_wrapper.query().convert()
   print(len(results["results"]["bindings"]))
-  if(len(results["results"]["bindings"])<=0):
-    a=2/0
   return results
 
 def encode(results,rec_relations,entities):
@@ -278,7 +276,7 @@ def relation_recommendation(relations):
       
   return new_relations
           
-def get_context_related(interest_entities,cont):
+def find_get_context_related(interest_entities,cont):
   print('get context!!!')
   print(cont.history)
   relations=[]
@@ -355,6 +353,68 @@ def get_context_related(interest_entities,cont):
             relations.append((question_triple[0],rec,question_triple[2]))
   return relations
 
+def get_context_related(hist,interest_entities,cont):
+  print('get context!!!')
+  print(cont.history)
+  relations=[]
+  cond=True
+
+  for ent in hist[1]:
+    for interest_entity in interest_entities:
+      print(interest_entity['entity'],ent['entity'])
+      if('_value' in hist[0][0]): 
+        asked_entity =hist[0][0][:-6] 
+      else:
+        asked_entity =hist[0][0]
+      print('asked_entity: ',asked_entity)
+      if is_domain(interest_entity['entity'],ent['entity'],cont):
+        print('Is domain!!')
+        if(cond):#so pode receber relacoes 1 vez
+          for h in hist[2]:
+            print('h: ',h)
+            #eliminando o  ('movie', 'has_genre', 'genre') 
+            if('genre_' in interest_entity['entity']):
+              if(h[0] =='movie' and h[2]  =='genre'):
+                relations.append(h)
+              if( 'genre_' not in h[0] and 'genre_' not in h[2]):
+                relations.append(h)
+            else:
+              if(h[0] != asked_entity and h[2] != asked_entity):
+                relations.append(h)
+
+          cond=False
+        if(interest_entity['entity']!=asked_entity):
+          question_triple = [ent['entity'],'',interest_entity['entity']]
+          print("relation triple: ",question_triple)
+          
+          #bugfix: questao 'filme de genero X', e 'e genero Y?' 
+          if(('movie' == question_triple[0]) and ('genre_' in question_triple[2]) ):
+            question_triple[0]='genre'              
+          
+          
+          rec = get_relation(question_triple)
+          relations.append((question_triple[0],rec,question_triple[2]))
+      
+      elif(is_domain(ent['entity'],interest_entity['entity'],cont)):
+        print('Is counter domain!!')
+        if(cond):
+          for h in hist[2]:
+            print('h: ',h)
+            if(h[0] != asked_entity and h[2] != asked_entity):
+              relations.append(h)
+          cond=False
+        if(ent['entity']!=asked_entity):
+          question_triple = [interest_entity['entity'],'',ent['entity']]
+          print("relation triple: ",question_triple)
+          rec = get_relation(question_triple)
+          relations.append((question_triple[0],rec,question_triple[2]))
+  return relations
+
+def check_ref(s):
+  if '[QUOTED_TEXT]' in s:
+    return 'explicit_ref'
+  return None
+  
 import copy
 from rasa.nlu.model import Interpreter,Metadata
 interpreter = Interpreter.load('models/')
@@ -365,30 +425,54 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
 
   #load context
   #cont = pickle.load(open())
-
+  old_text = copy.deepcopy(text)
   text=clean_word(text)
+  intent=check_ref(old_text)
 
-  entities_rasa = interpreter.parse(text)
-  print('Raw Entities:')
-  pprint(entities_rasa)
+  if(intent == 'explicit_ref'):
+    print('#########Intent: Explicit ref')
+    s1,s2= old_text.split('[QUOTED_TEXT]')
+    s1,s2=clean_word(s1),clean_word(s2)
 
+    print('searching for ',s1,' in explicit ref.')
+    print(cont.history)
+    hist=cont.find_context(s1)
+    print('found: ',str(hist))
 
-  intent = entities_rasa['intent']['name']
-  if(intent =='property_by_movie_series'):
-    intent = 'select'
-  if(intent =='movies_affirmative_simple'):
-    intent = 'ask'
+    entities_rasa = interpreter.parse(s2)
+    print('Raw Entities:')
+    pprint(entities_rasa)
+    entities=especify_entities(entities_rasa['entities'])
+    print('Corrected Entities:')
+    pprint(entities)
+
+    interest_entities=entities
+    relations_tuples = get_context_related(hist,interest_entities,cont)
+    relations_tuples = remove_duplicated_relations(relations_tuples)
+    print('infered relations:',relations_tuples)
   
+  else:
+    entities_rasa = interpreter.parse(text)
+    print('Raw Entities:')
+    pprint(entities_rasa)
 
-  entities=especify_entities(entities_rasa['entities'])
-  print('Corrected Entities:')
-  pprint(entities)
-  if(len(entities)==1):
-    intent='context'
+    intent = entities_rasa['intent']['name']
+    print('intent: ',intent)
+    if(intent =='property_by_movie_series'):
+      intent = 'select'
+    if(intent =='movies_affirmative_simple'):
+      intent = 'ask'
+
+    entities=especify_entities(entities_rasa['entities'])
+    print('Corrected Entities:')
+    pprint(entities)
+    if(len(entities)==1):
+      intent='context'
 
   #tratar intencao de contexto
   if(intent=='context'):
-    print('Inferir de contexto')
+    print('#########Intent: Context')
+    
     relations=[]
     interest_entities = entities
     print('interest_entity: ',interest_entities)
@@ -397,7 +481,7 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
     ref=cont.search_for_numbers(text)
     print(ref)
     if(ref==-1):
-      relations_tuples = get_context_related(interest_entities,cont)
+      relations_tuples = find_get_context_related(interest_entities,cont)
       relations_tuples = remove_duplicated_relations(relations_tuples)
       print('infered relations:',relations_tuples)
 
@@ -425,7 +509,8 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
                 relations_tuples = remove_duplicated_relations(relations_tuples)
                 print('tuples after: ',relations_tuples)
                 relations_tuples_copy = copy.deepcopy(relations_tuples)
-
+  
+  if(intent=='context' or intent == 'explicit_ref' ):
     rec_relations = relation_recommendation(relations_tuples)
     print(rec_relations)
     
@@ -509,6 +594,16 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
 #results = search(text)
 #print(results)
 
+#Cenario 4.1: Referencia explicita
+"""
+text='Quais os atores de Avatar?'
+results = search(text)
+print(results)
+
+text='Quais os atores de Avatar?[QUOTED_TEXT]E suas atrizes?'
+results = search(text)
+print(results)
+"""
 """
 #Cenario 1.1: Data properties
 text='qual a data de nascimento de Angelina Jolie'
@@ -558,10 +653,6 @@ results = search(text)
 print(results) 
 
 text= 'e tambem de fantasia.'
-results = search(text)
-print(results) 
-
-text= 'e me mostre os infantil.'
 results = search(text)
 print(results) 
 """
