@@ -51,7 +51,7 @@ class Context():
         #'series agora'. Devemos tratar isso em
         #get_context_related
         #retirado data results
-        self.history.append((interest_var,entities,relations))
+        self.history.append((interest_var,entities,relations,text))
         
 
         """
@@ -97,3 +97,12 @@ class Context():
                 if word in text.split():
                     ref_number = self.words[word]
         return ref_number
+
+    def find_context(self,text):
+      for hist in self.history:
+        print('comparing: ',str(hist[3]),' with ',str(text))
+        if(hist[3]==text):
+          return hist
+      return None
+      
+
