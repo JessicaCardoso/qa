@@ -369,7 +369,9 @@ TRIPLES_PERSON = [
 PERSON = [
           "actor", "actress", "writer", "costume_designer", "director", "editor","producer"
 ]
-
+PERSON_PROP = [
+  "birthName","birthDate"
+]
 MOVIE_SERIE = [
         "movie","series"
 ]
