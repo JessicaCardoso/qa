@@ -594,8 +594,8 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
 #results = search(text)
 #print(results)
 
-#Cenario 4.1: Referencia explicita
 """
+#Cenario 4.1: Referencia explicita
 text='Quais os atores de Avatar?'
 results = search(text)
 print(results)
@@ -604,6 +604,7 @@ text='Quais os atores de Avatar?[QUOTED_TEXT]E suas atrizes?'
 results = search(text)
 print(results)
 """
+
 """
 #Cenario 1.1: Data properties
 text='qual a data de nascimento de Angelina Jolie'
