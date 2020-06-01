@@ -251,6 +251,17 @@ def sparql_label_body(variables, sep):
   return variables2, sep.join(label_body), unknown
 
 def sparql_build(question_triples, sep="\n", spql_type="select"):
+  corrected_question_triples=[]
+  for q in question_triples:
+    if(q[0]=='serie'):
+      corrected_question_triples.append(('series',q[1],q[2]))
+    elif(q[2]=='serie'):
+      corrected_question_triples.append((q[0],q[1],'series'))
+    else:
+      corrected_question_triples.append(q)
+  question_triples=corrected_question_triples
+
+  
   variables = {}
   #question_triples = preprocess(question_triples)
   question_triples = part1(question_triples)
