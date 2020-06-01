@@ -21,6 +21,33 @@ sparql_wrapper = SPARQLWrapper(endpoint)
 sparql_wrapper.setCredentials(login, password)
 
 
+import signal
+import time
+
+class Timeout(Exception): 
+    pass 
+
+def try_one(func,args,t):
+    def timeout_handler(signum, frame):
+        raise Timeout()
+
+    old_handler = signal.signal(signal.SIGALRM, timeout_handler) 
+    signal.alarm(t) # triger alarm in 3 seconds
+    results=[]
+    try: 
+        t1=time.clock()
+        results = func(args)
+        t2=time.clock()
+
+    except Timeout:
+        print('{} timed out after {} seconds'.format(func.__name__,t))
+        return []
+    finally:
+        signal.signal(signal.SIGALRM, old_handler) 
+
+    signal.alarm(0)
+    return results
+
 def relation_extraction(relations_queries):
   relations=[]
   #for r in relations_queries:
@@ -108,6 +135,7 @@ def extend_triples(tuples,entities,uris):
               if(ent['uris'][0]=='movie' or ent['uris'][0]=='series'):
                 print('entity is movie!')
                 rel = get_relation([ent['uris'][0],'',triple[2]])
+                #rel = get_relation([ent['uris'][0],'','movie'])
                 #Bugfix questao 'Indicacoes do filme El Sistema Pelegrin'
                 if(rel == None):
                   pass
@@ -211,6 +239,8 @@ def encode(results,rec_relations,entities):
         "relations":rec_relations,
         "results":[],
         "entities":entities,
+        "suggestion_text": "",
+        "success":True,
         "eval_options": True
     }
   
@@ -230,6 +260,10 @@ def encode(results,rec_relations,entities):
   return output
 
 def is_domain(x,y,context):
+  #print('is domain: ',str(x),str(y))
+  if('person' == y and x in constants.PERSON_PROP):
+    return False
+  
   #bugfix: casos de genero
   if('genre_' in x and y in constants.MOVIE_SERIE):
     return True
@@ -284,8 +318,8 @@ def find_get_context_related(interest_entities,cont):
   relations=[]
   cond=True
 
-  #percorrer o historico
-  for hist in cont.history:
+  #percorrer o historico invertido
+  for hist in cont.history[::-1]:
     for ent in hist[1]:
       for interest_entity in interest_entities:
         print(interest_entity['entity'],ent['entity'])
@@ -535,7 +569,9 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
     print(sparql_query,interest_var)
 
     try:
-      results = run_sparql(sparql_query)
+      results = try_one(run_sparql,sparql_query,10)
+      if(len(results)==0):
+        a=2/0
       data= encode([results],rec_relations,entities)
       if(save_context_context):
         cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,results['head']['vars'])
@@ -548,6 +584,8 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
         "relations":[],
         "results":[],
         "entities":[],
+        "suggestion_text": "",
+        "success":False,
         "eval_options": False
         }
       return output
@@ -577,7 +615,9 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
   #return entities_rasa['intent']['name'],entities,relations_tuples,interest_var
   
   try:
-    results = run_sparql(sparql_query)
+    results = try_one(run_sparql,sparql_query,10)
+    if(len(results)==0):
+        a=2/0
     data= encode([results],rec_relations,entities)
     cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,results['head']['vars'])
     return data
@@ -589,6 +629,8 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
         "relations":[],
         "results":[],
         "entities":[],
+        "suggestion_text": "",
+        "success":False,
         "eval_options": False
         }
     return output
@@ -606,11 +648,38 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
 #text='O filme The Vampire obteve que premiação?'
 #text = 'O Ator Geraldo Rivera do filme Volver ganhou o que.'
 
+#bugs
+#text='estreia de Avatar?' #context
+#text='data de nascimento da Angeline Jolie?'
+
 
 #text='quais as atrizes e atores de Avatar'
 #results = search(text)
 #print(results)
 
+"""
+text='data de nascimento da Angelina Jolie?'
+results = search(text)
+print(results)
+
+text='genero de Avatar?'
+results = search(text)
+print(results)
+
+text='atores?'
+results = search(text)
+print(results)
+"""
+
+"""
+text='me diga os filmes de Ação?'
+results = search(text)
+print(results)
+
+text='e series?'
+results = search(text)
+print(results)
+"""
 """
 #Cenario 4.1: Referencia explicita
 text='Quais os atores de Avatar?'
