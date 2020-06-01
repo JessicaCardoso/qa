@@ -80,7 +80,7 @@ def extend_triples(tuples,entities,uris):
         new_tuples.append((triple[0],'has_genre','genre'))
       new_tuples.append(('genre','has_value',triple[2]))
     elif(triple[2].startswith('territory_')):
-      if(triple[0]=='movie' or triple[0]=='serie'):
+      if(triple[0]=='movie' or triple[0]=='series'):
         new_tuples.append((triple[0],'has_filming_location','territory'))
         new_tuples.append(('territory','has_value',triple[2]))
       else:
@@ -105,7 +105,7 @@ def extend_triples(tuples,entities,uris):
           if(ent['value']==triple[0] or ent['value']==triple[2]):
             if 'uris' in ent:
               print(ent['uris'])
-              if(ent['uris'][0]=='movie' or ent['uris'][0]=='serie'):
+              if(ent['uris'][0]=='movie' or ent['uris'][0]=='series'):
                 print('entity is movie!')
                 rel = get_relation([ent['uris'][0],'',triple[2]])
                 #Bugfix questao 'Indicacoes do filme El Sistema Pelegrin'
@@ -246,7 +246,7 @@ def is_domain(x,y,context):
       if(y in constants.PERSON):
         return is_domain(x,'person',context)
   #tratar serie e movie
-  if (x=='movie' or x == 'serie') and (y=='movie' or y == 'serie'):
+  if (x=='movie' or x == 'series') and (y=='movie' or y == 'series'):
     return True
   return False 
 
@@ -315,7 +315,7 @@ def find_get_context_related(interest_entities,cont):
               print('h: ',h)
               #trocar filmes por series
               #deve quebrar em perg complexa
-              if((h[0]=='movie' or h[0]=='serie') and (interest_entity['entity']=='movie' or interest_entity['entity']=='serie')):
+              if((h[0]=='movie' or h[0]=='series') and (interest_entity['entity']=='movie' or interest_entity['entity']=='series')):
                 relations.append((interest_entity['entity'],h[1],h[2]))
               #bugfix: 
               #h:  ('movie', 'has_genre', 'genre')
@@ -323,7 +323,7 @@ def find_get_context_related(interest_entities,cont):
               #onde a pergunta pede genre_logical_thrilling,
               #eliminando o  ('movie', 'has_genre', 'genre') 
               if('genre_' in interest_entity['entity']):
-                if((h[0] =='movie' or h[0] =='serie') and h[2]  =='genre'):
+                if((h[0] =='movie' or h[0] =='series') and h[2]  =='genre'):
                   relations.append(h)
                 if( 'genre_' not in h[0] and 'genre_' not in h[2]):
                   relations.append(h)
@@ -338,14 +338,14 @@ def find_get_context_related(interest_entities,cont):
           if(interest_entity['entity']!=asked_entity):
             
             #bugfix: trocar filme por serie
-            if((ent['entity']=='movie' or ent['entity']=='serie') and (interest_entity['entity']=='movie' or interest_entity['entity']=='serie')):
+            if((ent['entity']=='movie' or ent['entity']=='series') and (interest_entity['entity']=='movie' or interest_entity['entity']=='series')):
               pass
             else:  
               question_triple = [ent['entity'],'',interest_entity['entity']]
               print("relation triple: ",question_triple)
               
               #bugfix: questao 'filme de genero X', e 'e genero Y?' 
-              if(('movie' == question_triple[0] or 'serie' == question_triple[0]) 
+              if(('movie' == question_triple[0] or 'series' == question_triple[0]) 
                   and ('genre_' in question_triple[2]) ):
                 question_triple[0]='genre'              
             
@@ -365,7 +365,8 @@ def find_get_context_related(interest_entities,cont):
             question_triple = [interest_entity['entity'],'',ent['entity']]
             print("relation triple: ",question_triple)
             rec = get_relation(question_triple)
-            relations.append((question_triple[0],rec,question_triple[2]))
+            if(rec!=None):
+              relations.append((question_triple[0],rec,question_triple[2]))
   return relations
 
 def get_context_related(hist,interest_entities,cont):
@@ -429,7 +430,8 @@ def check_ref(s):
   if '[QUOTED_TEXT]' in s:
     return 'explicit_ref'
   return None
-  
+
+
 import copy
 from rasa.nlu.model import Interpreter,Metadata
 interpreter = Interpreter.load('models/')
