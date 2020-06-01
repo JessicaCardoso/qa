@@ -245,7 +245,9 @@ def is_domain(x,y,context):
     if(y!='person'):
       if(y in constants.PERSON):
         return is_domain(x,'person',context)
-    
+  #tratar serie e movie
+  if (x=='movie' or x == 'serie') and (y=='movie' or y == 'serie'):
+    return True
   return False 
 
 def relation_recommendation(relations):
@@ -307,36 +309,49 @@ def find_get_context_related(interest_entities,cont):
             #retiramos ((movie,'',award))
             #print('history: ')
             #print(hist[0][0])
+            
+            #Adentrando na tupla de contexto e verificando
             for h in hist[2]:
               print('h: ',h)
-              
-              
+              #trocar filmes por series
+              #deve quebrar em perg complexa
+              if((h[0]=='movie' or h[0]=='serie') and (interest_entity['entity']=='movie' or interest_entity['entity']=='serie')):
+                relations.append((interest_entity['entity'],h[1],h[2]))
               #bugfix: 
               #h:  ('movie', 'has_genre', 'genre')
               #h:  ('genre', 'has_value', 'genre_fun')
               #onde a pergunta pede genre_logical_thrilling,
               #eliminando o  ('movie', 'has_genre', 'genre') 
               if('genre_' in interest_entity['entity']):
-                if(h[0] =='movie' and h[2]  =='genre'):
+                if((h[0] =='movie' or h[0] =='serie') and h[2]  =='genre'):
                   relations.append(h)
                 if( 'genre_' not in h[0] and 'genre_' not in h[2]):
                   relations.append(h)
               else:
                 if(h[0] != asked_entity and h[2] != asked_entity):
                   relations.append(h)
+              
 
             cond=False
+          
+          #tratamento de erros
           if(interest_entity['entity']!=asked_entity):
-            question_triple = [ent['entity'],'',interest_entity['entity']]
-            print("relation triple: ",question_triple)
             
-            #bugfix: questao 'filme de genero X', e 'e genero Y?' 
-            if(('movie' == question_triple[0]) and ('genre_' in question_triple[2]) ):
-              question_triple[0]='genre'              
+            #bugfix: trocar filme por serie
+            if((ent['entity']=='movie' or ent['entity']=='serie') and (interest_entity['entity']=='movie' or interest_entity['entity']=='serie')):
+              pass
+            else:  
+              question_triple = [ent['entity'],'',interest_entity['entity']]
+              print("relation triple: ",question_triple)
+              
+              #bugfix: questao 'filme de genero X', e 'e genero Y?' 
+              if(('movie' == question_triple[0] or 'serie' == question_triple[0]) 
+                  and ('genre_' in question_triple[2]) ):
+                question_triple[0]='genre'              
             
-            
-            rec = get_relation(question_triple)
-            relations.append((question_triple[0],rec,question_triple[2]))
+              rec = get_relation(question_triple)
+              if(rec!=None):
+                relations.append((question_triple[0],rec,question_triple[2]))
         
         elif(is_domain(ent['entity'],interest_entity['entity'],cont)):
           print('Is counter domain!!')
@@ -512,7 +527,7 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
   
   if(intent=='context' or intent == 'explicit_ref' ):
     rec_relations = relation_recommendation(relations_tuples)
-    print(rec_relations)
+    print('rec_relations:',rec_relations)
     
     sparql_query,interest_var = sparql_build(relations_tuples)
     print(sparql_query,interest_var)
