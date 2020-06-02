@@ -7,6 +7,8 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 import pickle
 import traceback
 import context
+import multiprocessing
+import time
 
 #re_model = ClassificationModel('roberta', '/content/drive/My Drive/NLP/RE_models', args={})
 re_model = ClassificationModel('roberta', 'RE_models', use_cuda=False)
@@ -20,33 +22,6 @@ endpoint = "http://139.82.100.42:50004/fuseki/imdb-dataset/query"
 sparql_wrapper = SPARQLWrapper(endpoint)
 sparql_wrapper.setCredentials(login, password)
 
-
-import signal
-import time
-
-class Timeout(Exception): 
-    pass 
-
-def try_one(func,args,t):
-    def timeout_handler(signum, frame):
-        raise Timeout()
-
-    old_handler = signal.signal(signal.SIGALRM, timeout_handler) 
-    signal.alarm(t) # triger alarm in 3 seconds
-    results=[]
-    try: 
-        t1=time.clock()
-        results = func(args)
-        t2=time.clock()
-
-    except Timeout:
-        print('{} timed out after {} seconds'.format(func.__name__,t))
-        return []
-    finally:
-        signal.signal(signal.SIGALRM, old_handler) 
-
-    signal.alarm(0)
-    return results
 
 def relation_extraction(relations_queries):
   relations=[]
@@ -569,9 +544,21 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
     print(sparql_query,interest_var)
 
     try:
-      results = try_one(run_sparql,sparql_query,10)
-      if(len(results)==0):
-        a=2/0
+      p = multiprocessing.Process(target=run_sparql, name="Foo", args=(sparql_query,))
+      p.start()
+
+      p.join(3)
+      # If thread is active
+      if p.is_alive():
+          print("foo is running... let's kill it...")
+
+          # Terminate foo
+          p.terminate()
+          p.join()
+          a=2/0
+
+      results = run_sparql(sparql_query)
+    
       data= encode([results],rec_relations,entities)
       if(save_context_context):
         cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,results['head']['vars'])
@@ -615,7 +602,20 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
   #return entities_rasa['intent']['name'],entities,relations_tuples,interest_var
   
   try:
-    results = try_one(run_sparql,sparql_query,10)
+    # Start foo as a process
+    p = multiprocessing.Process(target=run_sparql, name="Foo", args=(sparql_query,))
+    p.start()
+
+    p.join(3)
+    # If thread is active
+    if p.is_alive():
+        print ("foo is running... let's kill it...")
+        # Terminate foo
+        p.terminate()
+        p.join()
+        a=2/0
+
+    results = run_sparql(sparql_query)
     if(len(results)==0):
         a=2/0
     data= encode([results],rec_relations,entities)
@@ -656,6 +656,7 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
 #text='quais as atrizes e atores de Avatar'
 #results = search(text)
 #print(results)
+
 
 """
 text='data de nascimento da Angelina Jolie?'
