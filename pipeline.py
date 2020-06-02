@@ -54,11 +54,13 @@ def remove_duplicated_relations(relations):
 
 def get_relation(triple):
   
-  if(triple[0] not in constants.PERSON and
+  if(triple[0] not in constants.P and
+    triple[0] not in constants.PERSON and
     triple[0] not in constants.MOVIE_SERIE and
     triple[0] not in constants.OTHERS ):
     return None
-  if(triple[2] not in constants.PERSON and
+  if(triple[2] not in constants.P and
+    triple[2] not in constants.PERSON and
     triple[2] not in constants.MOVIE_SERIE and
     triple[2] not in constants.OTHERS and
     triple[2] not in constants.GENRE_MAP):
@@ -123,7 +125,14 @@ def extend_triples(tuples,entities,uris):
               
               elif(ent['entity']=='person'):
                 print('entity is person!')
-                if(triple[0] not in constants.PERSON ):
+                
+                if(triple[2]=='award' or triple[2]=='nomination'):
+                   rel = get_relation(['person','',triple[2]])
+                   new_tuples.append(('person', rel, triple[2]))  
+                   for uri in ent['uris']:
+                    new_tuples.append(('person', 'has_value', uri[0]))  
+                
+                elif(triple[0] not in constants.PERSON ):
                   new_tuples.append((triple[0], 'has_person', 'person'))  
                   for uri in ent['uris']:
                     new_tuples.append(('person', 'has_value', uri[0]))  
@@ -374,6 +383,8 @@ def find_get_context_related(interest_entities,cont):
             question_triple = [interest_entity['entity'],'',ent['entity']]
             print("relation triple: ",question_triple)
             rec = get_relation(question_triple)
+            print(rec)
+            
             if(rec!=None):
               relations.append((question_triple[0],rec,question_triple[2]))
   return relations
@@ -624,7 +635,7 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
   except Exception:
     traceback.print_exc()
     output = {
-        "text": "Sem resultados.",
+        "text": "Resultados não encontrados. Tente reformular sua pergunta.",
         "related": [],
         "relations":[],
         "results":[],
@@ -650,12 +661,24 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
 
 #bugs
 #text='estreia de Avatar?' #context
-#text='data de nascimento da Angeline Jolie?'
+#text='data de nascimento da Angeline Joulie?'
 
 
 #text='quais as atrizes e atores de Avatar'
 #results = search(text)
 #print(results)
+
+text='voce poderia me dizer a data de nascimento da Angelina Jolie?'
+results = search(text)
+print(results)
+
+text='em quais filmes ela atuou?'
+results = search(text)
+print(results)
+
+text='que premios ela ganhou?'
+results = search(text)
+print(results)
 
 
 """
