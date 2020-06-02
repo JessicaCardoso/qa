@@ -365,7 +365,9 @@ TRIPLES_PERSON = [
  
 
 ]
-
+P = [
+  'person'
+]
 PERSON = [
           "actor", "actress", "writer", "costume_designer", "director", "editor","producer"
 ]
