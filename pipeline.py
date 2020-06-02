@@ -668,6 +668,7 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
 #results = search(text)
 #print(results)
 
+"""
 text='voce poderia me dizer a data de nascimento da Angelina Jolie?'
 results = search(text)
 print(results)
@@ -676,10 +677,14 @@ text='em quais filmes ela atuou?'
 results = search(text)
 print(results)
 
-text='que premios ela ganhou?'
+text='qual o gênero desse Foxfire?'
 results = search(text)
 print(results)
 
+text='quais premios ele ganhou?'
+results = search(text)
+print(results)
+"""
 
 """
 text='data de nascimento da Angelina Jolie?'
