@@ -10,6 +10,7 @@ import context
 import multiprocessing
 import time
 
+
 #re_model = ClassificationModel('roberta', '/content/drive/My Drive/NLP/RE_models', args={})
 re_model = ClassificationModel('roberta', 'RE_models', use_cuda=False)
 entities_dict = pickle.load( open( "entities_dict.p", "rb" ) )
@@ -167,8 +168,6 @@ def is_entity(entity):
     return True
   if(entity  in constants.GENRE_MAP):
     return True
-  
-  
   return False
 
 
@@ -212,7 +211,7 @@ def run_sparql(sparql_query):
   sparql_wrapper.setQuery(sparql_query)
   sparql_wrapper.setReturnFormat(JSON)
   results = sparql_wrapper.query().convert()
-  print(len(results["results"]["bindings"]))
+  #print(len(results["results"]["bindings"]))
   return results
 
 def encode(results,rec_relations,entities):
@@ -228,6 +227,10 @@ def encode(results,rec_relations,entities):
         "eval_options": True
     }
   
+  if('boolean' in results[0]):
+    output['results'] = {'boolean':[results[0]['boolean']]}
+    return output
+
   my_dict={key:[] for key in results[0]['head']['vars']}
 
   for re in results:
@@ -241,6 +244,7 @@ def encode(results,rec_relations,entities):
           my_dict[name].append(b[name]['value'])
           #data.append(b[name]['value'])
   output['results'] = my_dict
+  print('output: ',output)
   return output
 
 def is_domain(x,y,context):
@@ -301,6 +305,7 @@ def find_get_context_related(interest_entities,cont):
   print(cont.history)
   relations=[]
   cond=True
+  asked_entity=None
 
   #percorrer o historico invertido
   for hist in cont.history[::-1]:
@@ -309,10 +314,14 @@ def find_get_context_related(interest_entities,cont):
         print(interest_entity['entity'],ent['entity'])
         #We have to exclude the entities that have
         #been asked before.
-        #Ex: user ask award from movie. Now he ask the actos.
+        #Ex: user ask award from movie. Now he ask the actors.
         #We have to exclude 'award' from the context, as
         #it does not interest us, and keep 'movie' only.
-        if('_value' in hist[0][0]): 
+        print('hist: ',hist)
+        #caso questao foi ask
+        if(type(hist[0])==bool):
+          pass
+        elif('_value' in hist[0][0]): 
           asked_entity =hist[0][0][:-6] 
         else:
           asked_entity =hist[0][0]
@@ -457,7 +466,19 @@ from rasa.nlu.model import Interpreter,Metadata
 interpreter = Interpreter.load('models/')
 cont = context.Context()
 
-
+def get_output():
+  output = {
+        "text": "Resultados não encontrados. Tente reformular sua pergunta.",
+        "related": [],
+        "relations":[],
+        "results":[],
+        "entities":[],
+        "suggestion_text": "",
+        "success":False,
+        "eval_options": False
+        }
+  return output
+  
 def search(text='',id_client='0',id_hist='0',save_context_context=False):
 
   #load context
@@ -479,7 +500,15 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
     entities_rasa = interpreter.parse(s2)
     print('Raw Entities:')
     pprint(entities_rasa)
-    entities=especify_entities(entities_rasa['entities'])
+    entities,do_sugestion,sugestions=especify_entities(entities_rasa['entities'])
+    if(do_sugestion):
+      output = get_output()
+      output['results'] = sugestions
+      output['suggestion_text']='Você quis dizer: '
+      output["success"]=True
+      output["entities"]=entities
+      return output
+      
     print('Corrected Entities:')
     pprint(entities)
 
@@ -500,7 +529,14 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
     if(intent =='movies_affirmative_simple'):
       intent = 'ask'
 
-    entities=especify_entities(entities_rasa['entities'])
+    entities,do_sugestion,sugestions=especify_entities(entities_rasa['entities'])
+    if(do_sugestion):
+      output = get_output()
+      output['results'] = sugestions
+      output['suggestion_text']='Você quis dizer: '
+      output["success"]=True
+      output["entities"]=entities
+      return output
     print('Corrected Entities:')
     pprint(entities)
     if(len(entities)==1):
@@ -576,16 +612,7 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
       return data
     except Exception:
       traceback.print_exc()
-      output = {
-        "text": "Sem resultados.",
-        "related": [],
-        "relations":[],
-        "results":[],
-        "entities":[],
-        "suggestion_text": "",
-        "success":False,
-        "eval_options": False
-        }
+      output = get_output()
       return output
 
   #queries = get_relations_queries(entities_rasa)
@@ -627,23 +654,22 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
         a=2/0
 
     results = run_sparql(sparql_query)
+    print('results: ',results)
     if(len(results)==0):
         a=2/0
     data= encode([results],rec_relations,entities)
-    cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,results['head']['vars'])
+    if('head' in results):
+      if('vars'in results):
+        res=results['head']['vars']
+    if 'boolean' in results:
+      res = results['boolean']
+    else:
+      res = data['results']
+    cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,res)
     return data
   except Exception:
     traceback.print_exc()
-    output = {
-        "text": "Resultados não encontrados. Tente reformular sua pergunta.",
-        "related": [],
-        "relations":[],
-        "results":[],
-        "entities":[],
-        "suggestion_text": "",
-        "success":False,
-        "eval_options": False
-        }
+    output = get_output()
     return output
     
 #funciona
@@ -667,6 +693,12 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
 #text='quais as atrizes e atores de Avatar'
 #results = search(text)
 #print(results)
+
+
+#text='seria Angelina Jolie uma atriz?'
+#results = search(text)
+#print(results)
+
 
 """
 text='voce poderia me dizer a data de nascimento da Angelina Jolie?'
