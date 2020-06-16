@@ -3,7 +3,7 @@
 Instalar as bibliotecas contidas no requirements.txt
 
 ```bash
-$ pip install requirements.txt
+$ pip install -r requirements.txt
 ```
 
 Realizar download dos modelos do spaCy
