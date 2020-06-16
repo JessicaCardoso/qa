@@ -9,6 +9,7 @@ import rdflib
 from rdflib import URIRef, RDFS
 from sparql_builder import sparql_build
 from sparql_builder import constants
+from corrector import get_suggestion_property,get_correct_title,get_correct_people_name
 
 data_path = 'pandas_data/'
 graph = rdflib.Graph()
@@ -76,6 +77,9 @@ def clean_word(palavra):
 
 def especify_entities(entities):
   print('Specify Entities')
+  sugestions=[]
+  return_sugestion=False
+  
   c=-1
   unk_ents = []
   for ent in entities:
@@ -90,6 +94,10 @@ def especify_entities(entities):
       if(v in entities_dict):
         ent['entity'] = entities_dict[v]
       else:
+        #utilizar corrector
+        a = get_suggestion_property([ent['value']])
+        sugestions.append(a)
+        return_sugestion=True
         unk_ents.append(c)
     elif(ent['entity']=='awards'):
       ent['entity'] = entities_dict[clean_word(ent['value']).lower()]
@@ -116,15 +124,28 @@ def especify_entities(entities):
           ent['entity']=uris[0]
           ent['uris']=uris
         else:
-          print("Entity Unknow!!")
-          print('deleting the entity:')
-          unk_ents.append(c)
-      
+          #checar se e algum filme ou nome de pessoa
+          title_name_related=[]
+          if ent['entity']=='people_names':
+            title_name_related=get_correct_people_name(ent['value'])
+            for t in title_name_related:
+              sugestions.append(t)
+              return_sugestion=True
+            
+          elif ent['entity']=='title':
+            title_name_related=get_correct_title(ent['value'])
+            for t in title_name_related:
+              sugestions.append(t)
+              return_sugestion=True
+          if(len(title_name_related)==0):
+            print("Entity Unknow!!")
+            print('deleting the entity:')
+            unk_ents.append(c)
   new_entities=[]
   for i in range(len(entities)):
     if(i not in unk_ents):
       new_entities.append(entities[i])
-  return new_entities
+  return new_entities,return_sugestion,sugestions
 
 
 def get_relations_queries(rasa_entities):
