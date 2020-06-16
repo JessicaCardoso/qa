@@ -1,5 +1,11 @@
 # IQA
 
+## Executando
+
+Realizar download dos modelos e colocar nas pastas [RE_Models]()  e [models]() na raiz do projeto.
+
+* **Python**
+
 Instalar as bibliotecas contidas no requirements.txt
 
 ```bash
