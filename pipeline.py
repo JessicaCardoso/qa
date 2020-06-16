@@ -321,6 +321,8 @@ def find_get_context_related(interest_entities,cont):
         #caso questao foi ask
         if(type(hist[0])==bool):
           pass
+        elif(type(hist[0])==dict):
+          asked_entity=list(hist[0].keys())[0]
         elif('_value' in hist[0][0]): 
           asked_entity =hist[0][0][:-6] 
         else:
@@ -460,7 +462,7 @@ def check_ref(s):
     return 'explicit_ref'
   return None
 
-
+import os
 import copy
 from rasa.nlu.model import Interpreter,Metadata
 interpreter = Interpreter.load('models/')
@@ -478,11 +480,27 @@ def get_output():
         "eval_options": False
         }
   return output
-  
-def search(text='',id_client='0',id_hist='0',save_context_context=False):
 
+
+def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in_context=False,load_context=True):
+  cont = context.Context()  
+
+  #limpar contexto
+  if(clean_context):
+    if os.path.exists('contexts/'+id_client+'_'+id_hist+'.p'):
+      os.remove('contexts/'+id_client+'_'+id_hist+'.p')
+    else:
+      print("The file ",id_client+'_'+id_hist+'.p'," does not exist") 
   #load context
-  #cont = pickle.load(open())
+  if(load_context):
+    if(os.path.isfile('contexts/'+id_client+'_'+id_hist+'.p')):
+      print('Context Loaded!')
+      print('User: ',id_client)
+      print('Historic: ',id_hist)
+      cont = pickle.load(open('contexts/'+id_client+'_'+id_hist+'.p','rb'))
+    else:
+      print("No context found")
+
   old_text = copy.deepcopy(text)
   text=clean_word(text)
   intent=check_ref(old_text)
@@ -607,8 +625,9 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
       results = run_sparql(sparql_query)
     
       data= encode([results],rec_relations,entities)
-      if(save_context_context):
+      if(save_context_in_context):
         cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,results['head']['vars'])
+        pickle.dump(cont,open('contexts/'+id_client+'_'+id_hist+'.p','wb'))
       return data
     except Exception:
       traceback.print_exc()
@@ -666,6 +685,7 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
     else:
       res = data['results']
     cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,res)
+    pickle.dump(cont,open('contexts/'+id_client+'_'+id_hist+'.p','wb'))
     return data
   except Exception:
     traceback.print_exc()
@@ -699,6 +719,31 @@ def search(text='',id_client='0',id_hist='0',save_context_context=False):
 #results = search(text)
 #print(results)
 
+"""
+text='seria do genero diversao o filme Avatar?'
+results = search(text)
+print(results)
+
+text='seria Angelina Jolie uma atriz?'
+results = search(text)
+print(results)
+
+text='Angelina Jolie venceu algum oscar??'
+results = search(text)
+print(results)
+
+text='seria Avatar um filme?'
+results = search(text)
+print(results)
+
+text='quais seus atores?'
+results = search(text)
+print(results)
+
+text='suas atrizes?'
+results = search(text)
+print(results)
+"""
 
 """
 text='voce poderia me dizer a data de nascimento da Angelina Jolie?'
@@ -836,8 +881,8 @@ print(results)
 
 #premio do primeiro (atrizes)
 #preimio do primeiro ator (ator)
-"""
 
+"""
 """
 #Cenario 3.3: Contexto
 
