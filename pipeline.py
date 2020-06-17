@@ -725,31 +725,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
 #results = search(text)
 #print(results)
 
-"""
-text='seria do genero diversao o filme Avatar?'
-results = search(text)
-print(results)
 
-text='seria Angelina Jolie uma atriz?'
-results = search(text)
-print(results)
-
-text='Angelina Jolie venceu algum oscar??'
-results = search(text)
-print(results)
-
-text='seria Avatar um filme?'
-results = search(text)
-print(results)
-
-text='quais seus atores?'
-results = search(text)
-print(results)
-
-text='suas atrizes?'
-results = search(text)
-print(results)
-"""
 
 """
 text='voce poderia me dizer a data de nascimento da Angelina Jolie?'
