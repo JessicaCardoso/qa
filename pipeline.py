@@ -529,8 +529,9 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     if(do_sugestion):
       output = get_output()
       output['results'] = sugestions
-      output['suggestion_text']='Você quis dizer: '
-      output["success"]=True
+      output['related'] = sugestions
+      output['text']='Resultados não encontrados. Você quis dizer: '
+      output["success"]=False
       output["entities"]=entities
       return output
       
@@ -558,8 +559,9 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     if(do_sugestion):
       output = get_output()
       output['results'] = sugestions
-      output['suggestion_text']='Você quis dizer: '
-      output["success"]=True
+      output['related'] = sugestions
+      output['text']='Resultados não encontrados. Você quis dizer: '
+      output["success"]=False
       output["entities"]=entities
       return output
     print('Corrected Entities:')
@@ -792,13 +794,6 @@ results = search(text)
 print(results)
 
 text='e series?'
-results = search(text)
-print(results)
-"""
-"""
-#Cenario 5.1: Corretor
-
-text='premios da Angeline Joulie?'
 results = search(text)
 print(results)
 """
