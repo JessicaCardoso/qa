@@ -331,8 +331,6 @@ def find_get_context_related(interest_entities,cont):
           asked_entity =hist[0][0][:-6] 
         else:
           asked_entity =hist[0][0]
-        if('_value' in asked_entity): 
-          asked_entity =asked_entity[:-6]
         print('asked_entity: ',asked_entity)
         if is_domain(interest_entity['entity'],ent['entity'],cont):
           print('Is domain!!')
@@ -389,21 +387,24 @@ def find_get_context_related(interest_entities,cont):
                 relations.append((question_triple[0],rec,question_triple[2]))
         
         elif(is_domain(ent['entity'],interest_entity['entity'],cont)):
-          print('Is counter domain!!')
-          if(cond):
-            for h in hist[2]:
-              print('h: ',h)
-              if(h[0] != asked_entity and h[2] != asked_entity):
-                relations.append(h)
-            cond=False
-          if(ent['entity']!=asked_entity):
-            question_triple = [interest_entity['entity'],'',ent['entity']]
-            print("relation triple: ",question_triple)
-            rec = get_relation(question_triple)
-            print(rec)
-            
-            if(rec!=None):
-              relations.append((question_triple[0],rec,question_triple[2]))
+          if('award_' in ent['entity']):
+            pass
+          else:
+            print('Is counter domain!!')
+            if(cond):
+              for h in hist[2]:
+                print('h: ',h)
+                if(h[0] != asked_entity and h[2] != asked_entity):
+                  relations.append(h)
+              cond=False
+            if(ent['entity']!=asked_entity):
+              question_triple = [interest_entity['entity'],'',ent['entity']]
+              print("relation triple: ",question_triple)
+              rec = get_relation(question_triple)
+              print(rec)
+              
+              if(rec!=None):
+                relations.append((question_triple[0],rec,question_triple[2]))
   return relations
 
 def get_context_related(hist,interest_entities,cont):
@@ -725,7 +726,33 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
 #results = search(text)
 #print(results)
 
+"""
+#Cenario 6.1: ASK
 
+text='seria do genero diversao o filme Avatar?'
+results = search(text)
+print(results)
+
+text='seria Angelina Jolie uma atriz?'
+results = search(text)
+print(results)
+
+text='Angelina Jolie venceu algum oscar??'
+results = search(text)
+print(results)
+
+text='seria Avatar um filme?'
+results = search(text)
+print(results)
+
+text='quais seus atores?'
+results = search(text)
+print(results)
+
+text='suas atrizes?'
+results = search(text)
+print(results)
+"""
 
 """
 text='voce poderia me dizer a data de nascimento da Angelina Jolie?'
@@ -768,6 +795,14 @@ text='e series?'
 results = search(text)
 print(results)
 """
+"""
+#Cenario 5.1: Corretor
+
+text='premios da Angeline Joulie?'
+results = search(text)
+print(results)
+"""
+
 """
 #Cenario 4.1: Referencia explicita
 text='Quais os atores de Avatar?'
@@ -860,14 +895,14 @@ print(results)
 text='seus generos'
 results = search(text)
 print(results)
-"""
+
 #premio do primeiro (atrizes)
 #preimio do primeiro ator (ator)
-
-
 """
-#Cenario 3.3: Contexto
 
+
+#Cenario 3.3: Contexto
+"""
 text = 'atores que ganharam o oscar'
 
 results = search(text)
