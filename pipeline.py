@@ -331,6 +331,8 @@ def find_get_context_related(interest_entities,cont):
           asked_entity =hist[0][0][:-6] 
         else:
           asked_entity =hist[0][0]
+        if('_value' in asked_entity): 
+          asked_entity = asked_entity[:-6] 
         print('asked_entity: ',asked_entity)
         if is_domain(interest_entity['entity'],ent['entity'],cont):
           print('Is domain!!')
@@ -387,24 +389,21 @@ def find_get_context_related(interest_entities,cont):
                 relations.append((question_triple[0],rec,question_triple[2]))
         
         elif(is_domain(ent['entity'],interest_entity['entity'],cont)):
-          if('award_' in ent['entity']):
-            pass
-          else:
-            print('Is counter domain!!')
-            if(cond):
-              for h in hist[2]:
-                print('h: ',h)
-                if(h[0] != asked_entity and h[2] != asked_entity):
-                  relations.append(h)
-              cond=False
-            if(ent['entity']!=asked_entity):
-              question_triple = [interest_entity['entity'],'',ent['entity']]
-              print("relation triple: ",question_triple)
-              rec = get_relation(question_triple)
-              print(rec)
-              
-              if(rec!=None):
-                relations.append((question_triple[0],rec,question_triple[2]))
+          print('Is counter domain!!')
+          if(cond):
+            for h in hist[2]:
+              print('h: ',h)
+              if(h[0] != asked_entity and h[2] != asked_entity):
+                relations.append(h)
+            cond=False
+          if(ent['entity']!=asked_entity):
+            question_triple = [interest_entity['entity'],'',ent['entity']]
+            print("relation triple: ",question_triple)
+            rec = get_relation(question_triple)
+            print(rec)
+            
+            if(rec!=None):
+              relations.append((question_triple[0],rec,question_triple[2]))
   return relations
 
 def get_context_related(hist,interest_entities,cont):
@@ -798,6 +797,13 @@ results = search(text)
 print(results)
 """
 
+#Cenario 5.1: Corrector
+"""
+text='premios da Angeline Joulie?'
+results = search(text)
+print(results)
+"""
+
 """
 #Cenario 4.1: Referencia explicita
 text='Quais os atores de Avatar?'
@@ -870,8 +876,8 @@ results = search(text)
 print('Results: ')
 print(results)
 #text = 'atores desse primeiro'
+
 text = 'seus editores'
-#
 results = search(text)
 print(results)
 
@@ -891,9 +897,10 @@ text='seus generos'
 results = search(text)
 print(results)
 
+"""
 #premio do primeiro (atrizes)
 #preimio do primeiro ator (ator)
-"""
+
 
 
 #Cenario 3.3: Contexto
