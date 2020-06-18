@@ -324,7 +324,7 @@ def find_get_context_related(interest_entities,cont):
         print('hist: ',hist)
         #caso questao foi ask
         if(type(hist[0])==bool):
-          pass
+          asked_entity=''
         elif(type(hist[0])==dict):
           asked_entity=list(hist[0].keys())[0]
         elif('_value' in hist[0][0]): 
@@ -727,9 +727,9 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
 #results = search(text)
 #print(results)
 
-"""
-#Cenario 6.1: ASK
 
+#Cenario 6.1: ASK
+"""
 text='seria do genero diversao o filme Avatar?'
 results = search(text)
 print(results)
