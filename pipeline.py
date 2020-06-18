@@ -796,7 +796,11 @@ text='e series?'
 results = search(text)
 print(results)
 """
-
+"""
+text='premios de Avatar'
+results = search(text)
+print(results)
+"""
 #Cenario 5.1: Corrector
 """
 text='premios da Angeline Joulie?'
