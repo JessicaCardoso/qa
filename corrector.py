@@ -6,8 +6,8 @@ inv_areas = pickle.load(open('corrector/inv_areas.b','rb'))
 count_vect = pickle.load(open('corrector/count_vect.b','rb'))
 entities_dict = pickle.load(open('entities_dict.p','rb'))
 
-movie_data = pickle.load(open('pandas_data/movies.dat','rb'))
-people_data = pickle.load(open('pandas_data/person.dat','rb'))
+movie_data = pickle.load(open('pandas_data/movies_df.dat','rb'))
+people_data = pickle.load(open('pandas_data/person_df.dat','rb'))
 print("Corrector data loaded!!!")
 
 def get_suggestion_property(text):
