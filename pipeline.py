@@ -620,7 +620,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
       p = multiprocessing.Process(target=run_sparql, name="Foo", args=(sparql_query,))
       p.start()
 
-      p.join(3)
+      p.join(7)
       # If thread is active
       if p.is_alive():
           print("foo is running... let's kill it...")
@@ -633,8 +633,10 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
       results = run_sparql(sparql_query)
     
       data= encode([results],rec_relations,entities)
+      res= results['head']['vars']
+      #print('res:',res)
       if(save_context_in_context):
-        cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,results['head']['vars'])
+        cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,res)
         pickle.dump(cont,open('contexts/'+id_client+'_'+id_hist+'.p','wb'))
       return data
     except Exception:
@@ -671,7 +673,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     p = multiprocessing.Process(target=run_sparql, name="Foo", args=(sparql_query,))
     p.start()
 
-    p.join(3)
+    p.join(7)
     # If thread is active
     if p.is_alive():
         print ("foo is running... let's kill it...")
@@ -681,7 +683,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
         a=2/0
 
     results = run_sparql(sparql_query)
-    print('results: ',results)
+    #print('results: ',results)
     if(len(results)==0):
         a=2/0
     data= encode([results],rec_relations,entities)
@@ -692,6 +694,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
       res = results['boolean']
     else:
       res = data['results']
+    res = list(res.keys())
     cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,res)
     pickle.dump(cont,open('contexts/'+id_client+'_'+id_hist+'.p','wb'))
     return data
@@ -872,7 +875,7 @@ results = search(text)
 print(results) 
 """
 
-"""
+
 #Cenario 3.2: Contexto 
 text='premiacao de Avatar'
 
@@ -901,7 +904,7 @@ text='seus generos'
 results = search(text)
 print(results)
 
-"""
+
 #premio do primeiro (atrizes)
 #preimio do primeiro ator (ator)
 
