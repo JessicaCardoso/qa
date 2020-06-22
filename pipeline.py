@@ -54,6 +54,9 @@ def remove_duplicated_relations(relations):
   return filtered_relations
 
 def get_relation(triple):
+
+  if(triple[0] in constants.PERSON and 'award_' in triple[2]):
+    return 'has_award'
   
   if(triple[0] not in constants.P and
     triple[0] not in constants.PERSON and
@@ -64,7 +67,7 @@ def get_relation(triple):
     triple[2] not in constants.PERSON and
     triple[2] not in constants.MOVIE_SERIE and
     triple[2] not in constants.OTHERS and
-    triple[2] not in constants.GENRE_MAP):
+    triple[2] not in constants.GENRE_MAP ):
     return None
 
   for t in constants.TRIPLES_MOVIE:
@@ -249,6 +252,11 @@ def encode(results,rec_relations,entities):
 
 def is_domain(x,y,context):
   #print('is domain: ',str(x),str(y))
+  
+  #bugfix person com award_... Cenario 3.3
+  if(y in constants.PERSON and 'award_' in x):
+    return True
+
   if('person' == y and x in constants.PERSON_PROP):
     return False
   
@@ -301,7 +309,7 @@ def relation_recommendation(relations):
   return new_relations
           
 def find_get_context_related(interest_entities,cont):
-  print('get context!!!')
+  print('find_get_context_related!!!')
   print(cont.history)
   relations=[]
   cond=True
@@ -385,6 +393,7 @@ def find_get_context_related(interest_entities,cont):
                 question_triple[0]='genre'              
             
               rec = get_relation(question_triple)
+              print(rec)
               if(rec!=None):
                 relations.append((question_triple[0],rec,question_triple[2]))
         
@@ -403,11 +412,15 @@ def find_get_context_related(interest_entities,cont):
             print(rec)
             
             if(rec!=None):
+              #tratar award_..
+              if('award_' in question_triple[2]):
+                question_triple[2] = 'award'
+                
               relations.append((question_triple[0],rec,question_triple[2]))
   return relations
 
 def get_context_related(hist,interest_entities,cont):
-  print('get context!!!')
+  print('get_context_related!!!')
   print(cont.history)
   relations=[]
   cond=True
@@ -855,7 +868,6 @@ print(results)
 #text = 'Seria Angelina Jolie uma atriz'
 #text = 'Seria do genero diversão esse filme avatar?'
 
-
 """
 #Cenario 3.1: Contexto 
 text= 'Filmes de comédia.'
@@ -875,7 +887,7 @@ results = search(text)
 print(results) 
 """
 
-
+"""
 #Cenario 3.2: Contexto 
 text='premiacao de Avatar'
 
@@ -908,10 +920,10 @@ print(results)
 #premio do primeiro (atrizes)
 #preimio do primeiro ator (ator)
 
-
-
-#Cenario 3.3: Contexto
 """
+"""
+#Cenario 3.3: Contexto
+
 text = 'atores que ganharam o oscar'
 
 results = search(text)
