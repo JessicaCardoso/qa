@@ -633,7 +633,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
       p = multiprocessing.Process(target=run_sparql, name="Foo", args=(sparql_query,))
       p.start()
 
-      p.join(7)
+      p.join(15)
       # If thread is active
       if p.is_alive():
           print("foo is running... let's kill it...")
@@ -686,7 +686,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     p = multiprocessing.Process(target=run_sparql, name="Foo", args=(sparql_query,))
     p.start()
 
-    p.join(7)
+    p.join(15)
     # If thread is active
     if p.is_alive():
         print ("foo is running... let's kill it...")
