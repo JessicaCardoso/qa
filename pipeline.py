@@ -219,6 +219,7 @@ def run_sparql(sparql_query):
 
 def encode(results,rec_relations,entities):
   data=[]
+
   output = {
         "text": "Resultado(s) retornado(s):",
         "related": [],
@@ -236,16 +237,24 @@ def encode(results,rec_relations,entities):
 
   my_dict={key:[] for key in results[0]['head']['vars']}
 
+  cond = False
   for re in results:
     bindings = re['results']['bindings']
     for b in bindings:
       for name in b.keys():
+        if(len(b[name])>0):
+            cond=True
         if(b[name]['value'].startswith('http')):
+
           my_dict[name].append(get_rdfs_label(b[name]['value']))
           #data.append(get_rdfs_label(b[name]['value']))
         else:
           my_dict[name].append(b[name]['value'])
           #data.append(b[name]['value'])
+  if(cond==False):
+    output['text']='sem resultados encontrados.'
+    output['results'] = my_dict
+    return output
   output['results'] = my_dict
   print('output: ',output)
   return output
@@ -253,8 +262,15 @@ def encode(results,rec_relations,entities):
 def is_domain(x,y,context):
   #print('is domain: ',str(x),str(y))
   
+  if('person' == y and x in constants.PERSON_PROP):
+    return False
+  
+
+
   #bugfix person com award_... Cenario 3.3
-  if(y in constants.PERSON and 'award_' in x):
+  if(x in constants.PERSON and y == 'person'):
+    return True
+  if(y in constants.PERSON and 'award_'in x):
     return True
 
   if('person' == y and x in constants.PERSON_PROP):
@@ -307,13 +323,28 @@ def relation_recommendation(relations):
     new_relations.append(new_triple)
       
   return new_relations
-          
+
+def add_relation(relations,interest_entity,ent):
+    question_triple = [interest_entity['entity'],'',ent['entity']]
+    print("relation triple: ",question_triple)
+    rec = get_relation(question_triple)
+    print(rec)
+    
+    if(rec!=None):
+      #tratar award_..
+      if('award_' in question_triple[2]):
+        question_triple[2] = 'award'
+        
+      relations.append((question_triple[0],rec,question_triple[2]))
+    return relations
+  
 def find_get_context_related(interest_entities,cont):
   print('find_get_context_related!!!')
   print(cont.history)
   relations=[]
   cond=True
   asked_entity=None
+  hist_intent = 'select'
 
   #percorrer o historico invertido
   for hist in cont.history[::-1]:
@@ -344,6 +375,9 @@ def find_get_context_related(interest_entities,cont):
         print('asked_entity: ',asked_entity)
         if is_domain(interest_entity['entity'],ent['entity'],cont):
           print('Is domain!!')
+          if(type(hist[0])==bool):
+            hist_intent='ask'
+            print('Found history has a Ask question')
           #context_entities.append(ent['entity'])
           if(cond):#so pode receber relacoes 1 vez
             #retirar a relacao principal da questao
@@ -370,6 +404,14 @@ def find_get_context_related(interest_entities,cont):
                   relations.append(h)
                 if( 'genre_' not in h[0] and 'genre_' not in h[2]):
                   relations.append(h)
+              
+              #bugfix caso ask: Ex: trocar atriz por ator
+              elif(hist_intent=='ask'):
+                if(h[0] in constants.PERSON and interest_entity['entity'] in constants.PERSON):
+                    relations.append([interest_entity['entity'],h[1],h[2]])
+
+
+                
               else:
                 if(h[0] != asked_entity and h[2] != asked_entity):
                   relations.append(h)
@@ -399,25 +441,36 @@ def find_get_context_related(interest_entities,cont):
         
         elif(is_domain(ent['entity'],interest_entity['entity'],cont)):
           print('Is counter domain!!')
+          if(type(hist[0])==bool):
+            hist_intent='ask'
+            print('Found history has a Ask question')
           if(cond):
+
             for h in hist[2]:
+              #bug questao: Premio de cameron diaz -> E Angelina joulie?
+              #estou jogando fora as pessoas do historico em questao
+              if(interest_entity['entity']=='person'):
+                if(h[0]=='person' and h[1] == 'has_value'):
+                    continue
+                else:
+                    relations.append(h)
+
               print('h: ',h)
               if(h[0] != asked_entity and h[2] != asked_entity):
                 relations.append(h)
             cond=False
           if(ent['entity']!=asked_entity):
-            question_triple = [interest_entity['entity'],'',ent['entity']]
-            print("relation triple: ",question_triple)
-            rec = get_relation(question_triple)
-            print(rec)
-            
-            if(rec!=None):
-              #tratar award_..
-              if('award_' in question_triple[2]):
-                question_triple[2] = 'award'
-                
-              relations.append((question_triple[0],rec,question_triple[2]))
-  return relations
+            relations=add_relation(relations,interest_entity,ent)
+
+          #bug questao: Premio de cameron diaz -> E Angelina joulie?
+          if(interest_entity['entity']=='person'):
+            for uri in interest_entity['uris']:
+                relations.append(('person','has_value',uri[0]))
+            return relations
+            #relations=add_relation(relations,interest_entity,ent)
+
+
+  return relations,hist_intent
 
 def get_context_related(hist,interest_entities,cont):
   print('get_context_related!!!')
@@ -545,6 +598,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
       output['text']='Resultados não encontrados. Você quis dizer: '
       output["success"]=False
       output["entities"]=entities
+      print('returning suggestions (1)...')
       return output
       
     print('Corrected Entities:')
@@ -570,11 +624,12 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     entities,do_sugestion,sugestions=especify_entities(entities_rasa['entities'])
     if(do_sugestion):
       output = get_output()
-      output['results'] = sugestions
+      output['results'] = {"sugestões": sugestions}
       output['related'] = sugestions
       output['text']='Resultados não encontrados. Você quis dizer: '
       output["success"]=False
       output["entities"]=entities
+      print('returning suggestions (2)...')
       return output
     print('Corrected Entities:')
     pprint(entities)
@@ -585,6 +640,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
   if(intent=='context'):
     print('#########Intent: Context')
     
+    hist_intent = 'select'
     relations=[]
     interest_entities = entities
     print('interest_entity: ',interest_entities)
@@ -593,7 +649,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     ref=cont.search_for_numbers(text)
     print(ref)
     if(ref==-1):
-      relations_tuples = find_get_context_related(interest_entities,cont)
+      relations_tuples,hist_intent = find_get_context_related(interest_entities,cont)
       relations_tuples = remove_duplicated_relations(relations_tuples)
       print('infered relations:',relations_tuples)
 
@@ -626,14 +682,14 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     rec_relations = relation_recommendation(relations_tuples)
     print('rec_relations:',rec_relations)
     
-    sparql_query,interest_var = sparql_build(relations_tuples)
+    sparql_query,interest_var = sparql_build(relations_tuples,spql_type=hist_intent)
     print(sparql_query,interest_var)
 
     try:
       p = multiprocessing.Process(target=run_sparql, name="Foo", args=(sparql_query,))
       p.start()
 
-      p.join(15)
+      p.join(8)
       # If thread is active
       if p.is_alive():
           print("foo is running... let's kill it...")
@@ -646,14 +702,27 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
       results = run_sparql(sparql_query)
     
       data= encode([results],rec_relations,entities)
-      res= results['head']['vars']
+      
+      if('head' in results):
+        if('vars'in results):
+          res=results['head']['vars']
+          res = list(res.keys())
+      if 'boolean' in results:
+        res = results['boolean']
+      else:
+        res = data['results']
+        res = list(res.keys())
+
       #print('res:',res)
       if(save_context_in_context):
         cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,res)
         pickle.dump(cont,open('contexts/'+id_client+'_'+id_hist+'.p','wb'))
+      print('returning data: ')
+      print(data)
       return data
     except Exception:
       traceback.print_exc()
+      print('returning empty..')
       output = get_output()
       return output
 
@@ -686,7 +755,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     p = multiprocessing.Process(target=run_sparql, name="Foo", args=(sparql_query,))
     p.start()
 
-    p.join(15)
+    p.join(8)
     # If thread is active
     if p.is_alive():
         print ("foo is running... let's kill it...")
@@ -703,16 +772,20 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     if('head' in results):
       if('vars'in results):
         res=results['head']['vars']
+        res = list(res.keys())
     if 'boolean' in results:
       res = results['boolean']
     else:
       res = data['results']
-    res = list(res.keys())
+      res = list(res.keys())
     cont.set_current_turn_results(text,data,entities_rasa['intent']['name'],entities,relations_tuples,res)
     pickle.dump(cont,open('contexts/'+id_client+'_'+id_hist+'.p','wb'))
+    print('returning data: ')
+    print(data)
     return data
   except Exception:
     traceback.print_exc()
+    print('returning empty..')
     output = get_output()
     return output
     
@@ -885,42 +958,9 @@ print(results)
 text= 'e tambem de fantasia.'
 results = search(text)
 print(results) 
-"""
 
 """
-#Cenario 3.2: Contexto 
-text='premiacao de Avatar'
 
-results = search(text)
-print('Results: ')
-print(results)
-#text = 'atores desse primeiro'
-
-text = 'seus editores'
-results = search(text)
-print(results)
-
-text='suas atrizes'
-results = search(text)
-print(results)
-text='seus atores'
-results = search(text)
-print(results)
-text='seus diretores'
-results = search(text)
-print(results)
-text='suas indicações'
-results = search(text)
-print(results)
-text='seus generos'
-results = search(text)
-print(results)
-
-
-#premio do primeiro (atrizes)
-#preimio do primeiro ator (ator)
-
-"""
 """
 #Cenario 3.3: Contexto
 
