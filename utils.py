@@ -59,10 +59,10 @@ def get_person_uri(birth_name):
 
 
 def get_relations(text):
-	relations = text.split('*')[1]
-	#relations_list = relations.split(')')
-	relations_list = re.findall('\(.*?\)',relations)
-	return relations_list
+  relations = text.split('*')[1]
+  #relations_list = relations.split(')')
+  relations_list = re.findall('\(.*?\)',relations)
+  return relations_list
 
 
 def clean_word(palavra):
@@ -108,6 +108,7 @@ def especify_entities(entities):
       #checar nome pessoa
       
       #print(ent['value'])
+      print('searching person name in database...')
       uris = get_person_uri(ent['value'])
       
       if(len(uris)>=1):
@@ -117,6 +118,7 @@ def especify_entities(entities):
         ent['uris']=uris
       else:
         #checar titulo filme
+        print('searching movie title in database...')
         uris = get_uri_from_movie_serie(ent['value'])
         #print(uris)
         if(len(uris[1])>=1):
