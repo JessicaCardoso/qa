@@ -173,9 +173,9 @@ GENRE_MAP = {
                             "genre_brute_Action",
                             "genre_old_action",
                       ]),
-      "genre_brute_Action": ("http://www.movieontology.org/2009/10/01/movieontology.owl#Brute_Action", []),
+      "genre_brute_action": ("http://www.movieontology.org/2009/10/01/movieontology.owl#Brute_Action", []),
       "genre_old_action": ("http://www.movieontology.org/2009/10/01/movieontology.owl#Old_Action", []),
-      "genre_entertaining_Information": ("http://www.movieontology.org/2009/10/01/movieontology.owl#Entertaining_Information", []),
+      "genre_entertaining_information": ("http://www.movieontology.org/2009/10/01/movieontology.owl#Entertaining_Information", []),
       "genre_experience": ("http://www.movieontology.org/2009/10/01/movieontology.owl#Experience",
                            [
                             "genre_intelectual_entertainment",
@@ -352,7 +352,7 @@ TRIPLES_MOVIE = [
  ('movie', 'has_company', 'company'),
  ('movie', 'has_filming_location', 'location'),
  ('movie', 'has_runtime', 'runtime'),
- ('movie', 'has_release_date', 'release_date'),
+ ('movie', 'has_release_date', 'releasedate'),
  ('movie', 'has_person', 'person'),
  
 
@@ -361,7 +361,9 @@ TRIPLES_PERSON = [
 ('person', 'has_award', 'award'),
  ('person', 'has_indication_date', 'indication_date'),
  ('person', 'has_nomination', 'nomination'),
- ('person', 'has_birth_date', 'birth_date'),
+ ('person', 'has_birth_date', 'birthDate'),
+ ('person', 'has_birth_name', 'birthName'),
+
  
 
 ]
@@ -376,6 +378,10 @@ PERSON_PROP = [
 ]
 MOVIE_SERIE = [
         "movie","series"
+]
+
+MOVIE_PROP_ONLY = [
+        "runtime","gross","title","releasedate","productionStartYear","indicationDate","imdbrating","countryCode","companyName","budget"
 ]
 
 OTHERS = [
