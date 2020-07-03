@@ -51,7 +51,7 @@ class Context():
         #'series agora'. Devemos tratar isso em
         #get_context_related
         #retirado data results
-        self.history.append((interest_var,entities,relations,text))
+        self.history.append((interest_var,entities,relations,text,intent))
         
 
         """

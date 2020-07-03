@@ -34,12 +34,12 @@ class MainClass(Resource):
     def get(self):
     	print("user_id:", request.args.get("uid"))
     	print("history_id", request.args.get("hid"))
-    	return pipeline.search(request.args.get("q"))
+    	return pipeline.search(request.args.get("q"),id_client = request.args.get("uid"),id_hist=request.args.get("hid"))
 
 
 if __name__ == "__main__":
-    if os.getenv("MODE") ==  "prod":
-        port = int(os.environ.get("PORT", 5000))
-        app.run(host='0.0.0.0', port=port)
-    else:
-        app.run(debug=True)
+    #if os.getenv("MODE") ==  "prod":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
+    #else:
+    #    app.run(debug=True)

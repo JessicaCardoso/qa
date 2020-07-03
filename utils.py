@@ -33,7 +33,16 @@ def get_uri_from_movie_serie(title):
         return "movie", results["uri"].tolist()
     else:
         results = series.loc[series['title'].str.lower()==title.lower()]
-        return "serie", results["uri"].tolist()
+        return "series", results["uri"].tolist()
+
+def get_uri_from_serie_movie(title):
+  results = series.loc[series['title'].str.lower()==title.lower()]
+  if not results.empty:
+        return "series", results["uri"].tolist()
+  else:
+    movies.loc[movies['title'].str.lower()==title.lower()]
+    return "movie", results["uri"].tolist()
+     
 
 def get_company_uri(name):
     results = company.loc[company['name'].str.lower()==name.lower()]
@@ -75,19 +84,48 @@ def clean_word(palavra):
     r=re.sub('[^a-zA-Z0-9 \\\]', '', palavraSemAcento)
     return r
 
+def check_remove(val):
+  exclude_list = ['data','Data']
+  if(val in exclude_list):
+    return True
+
+  return False
+
+
 def especify_entities(entities):
   print('Specify Entities')
   sugestions=[]
   return_sugestion=False
+  to_check_cond=False
   
   c=-1
   unk_ents = []
+  ambigue_ents=[]
+
+  is_series=False
+
+
   for ent in entities:
     c+=1
     print(ent['entity'])
+
+    #filter
+    if(ent['value']=='data de'):
+      continue
+
+    if(check_remove(ent['value'])):
+      print('Removing: ',ent['value'])
+      unk_ents.append(c)
+      continue
+
     print('checking what entity is this value: ',ent['value'])
     if(ent['value'] in entities_dict):
       ent['entity'] = entities_dict[ent['value']]
+      print('entity is defined on entities dict!')
+      if(entities_dict[ent['value']]=='series'):
+        is_series=True
+      print(ent['entity'])
+      continue
     elif(ent['entity']=='genre_name' or ent['entity']=='staff_ent' or ent['entity']=='property_ent'):
       print(clean_word(ent['value']))
       v=clean_word(ent['value']).lower()
@@ -96,36 +134,101 @@ def especify_entities(entities):
       else:
         #utilizar corrector
         a = get_suggestion_property([ent['value']])
-        sugestions.append(a)
-        return_sugestion=True
-        unk_ents.append(c)
+        #sugestions.append(a)
+        #return_sugestion=True
+        #unk_ents.append(c)
+        print('corrector suggestion: ',str(a))
+        ent['entity']=a
     elif(ent['entity']=='awards'):
       ent['entity'] = entities_dict[clean_word(ent['value']).lower()]
     elif(ent['entity']=='award'):
       pass
     else:
-      
-      #checar nome pessoa
-      
-      #print(ent['value'])
-      print('searching person name in database...')
-      uris = get_person_uri(ent['value'])
-      
-      if(len(uris)>=1):
-        print('entity is a person')
-        print(uris)
-        ent['entity']='person'
-        ent['uris']=uris
-      else:
-        #checar titulo filme
-        print('searching movie title in database...')
-        uris = get_uri_from_movie_serie(ent['value'])
+
+      if ent['entity']=='people_names':
+        print('searching person name in database...')
+        uris = get_person_uri(ent['value'])
+        
+        if(len(uris)>=1):
+          print('entity is a person')
+          print(uris)
+          ent['entity']='person'
+          ent['uris']=uris
+
+      elif ent['entity']=='title':
+        if(is_series==False):
+          print('searching movie title in database...')
+          uris = get_uri_from_movie_serie(ent['value'])
+        else:
+          print('searching serie title in database...')
+          uris = get_uri_from_serie_movie(ent['value'])
         #print(uris)
         if(len(uris[1])>=1):
           #print('entity is a movie')
           ent['entity']=uris[0]
           ent['uris']=uris
+
+      else:
+        #checar se e algum filme ou nome de pessoa
+        title_name_related=[]
+        if ent['entity']=='people_names':
+          title_name_related=get_correct_people_name(ent['value'])
+          for t in title_name_related:
+            sugestions.append(t)
+            return_sugestion=True
+          
+        elif ent['entity']=='title':
+          title_name_related=get_correct_title(ent['value'])
+          for t in title_name_related:
+            sugestions.append(t)
+            return_sugestion=True
+        if(len(title_name_related)==0):
+          print("Entity Unknow!!")
+          print('deleting the entity:')
+          unk_ents.append(c)
+
+      """
+      to_check_cond=False
+
+      #1 - Checar se e pessoa
+      #Existe o caso da pessoa ser um filme. Angelina Jolie por exemplo.
+      #Nesse caso, devemos checar o que se pergunta da Angelina Jolie.
+      #Se for genero,rating,etc é filme, pois sao propriedades de filme
+      #Se nao for isso o perguntado, tratamos como pessoa.
+      #checar pessoa
+      print('searching person name in database...')
+      person_uris = get_person_uri(ent['value'])
+      
+      if(len(person_uris)>=1):
+        print('entity maybe a person')
+        print(person_uris)
+
+        #checar se e filme
+        print('searching movie title in database...')
+        movie_uris = get_uri_from_movie_serie(ent['value'])
+        #print(uris)
+        if(len(movie_uris[1])>=1):
+          print("Entity is also a movie")
+          #conflito: e pessoa e filme
+          #deixar para checar as outras entidades no final
+          ent['entity']='to_check'
+          ent['uris']=(person_uris,movie_uris)
+          to_check_cond=True
+          ambigue_ents.append(c)
         else:
+          ent['entity']='person'
+          ent['uris']=uris
+      else:
+         #checar titulo filme
+        print('searching movie title in database...')
+        uris = get_uri_from_movie_serie(ent['value'])
+        #print(uris)
+        if(len(uris[1])>=1):
+          #print('entity is a movie')
+          ent['entity']='movie'
+          ent['uris']=uris
+        else:
+          #Tentar o corretor
           #checar se e algum filme ou nome de pessoa
           title_name_related=[]
           if ent['entity']=='people_names':
@@ -143,6 +246,29 @@ def especify_entities(entities):
             print("Entity Unknow!!")
             print('deleting the entity:')
             unk_ents.append(c)
+    """
+  """
+  #em caso de ambiguidade, decidir se e pessoa ou filme
+  if(to_check_cond):
+    print("checking ambiguity...")
+    cond = True
+    for ent in entities:
+      if(cond is False):
+        break
+      if ent['entity'] in constants.MOVIE_PROP_ONLY:
+        for amb in ambigue_ents:
+          entities[amb]['entity'] = 'movie'
+          entities[amb]['uris']= entities[amb]['uris'][1]
+          print('Is Movie!!')
+          cond = False
+          break
+    if(cond is True):
+      for amb in ambigue_ents:
+        entities[amb]['entity'] = 'person'
+        entities[amb]['uris']= entities[amb]['uris'][0]
+        print("Is person!!")
+  """
+
   new_entities=[]
   for i in range(len(entities)):
     if(i not in unk_ents):
