@@ -106,7 +106,7 @@ def extend_triples(tuples,entities,uris):
 
       print('relation: ',rel)
       if(rel is None):
-        print('triple has person name or title')
+        print('triple has person name or title or company name')
         print(triple)
         #entidades
         for ent in entities:
@@ -145,7 +145,14 @@ def extend_triples(tuples,entities,uris):
                     new_tuples.append((triple[0], 'has_value', uri[0]))
                 if(triple[2]=='birthDate'):
                   new_tuples.append(('person', 'has_birth_date', 'birthDate'))
-                
+              
+              elif(ent['entity']=='company_names'):
+                print('entity is company!')
+                for uri in ent['uris']:
+                    new_tuples.append((triple[0], 'has_value', uri))
+
+
+
               #else:
               #  caso [['http://www.imdb..', 'Actress'],[['http://www.imdb...', 'Producer']]
               #  new_tuples.append(('movie','has_person','person'))
@@ -186,6 +193,8 @@ def construct_tuples(relations,entities):
       pass
     elif(ent['entity']=='people_names'):
       pass
+    elif(ent['entity']=='company_names'):
+      pass
     else:
       ent_dict[ent['value']] = ent['entity']
   print('ent_dict: ',ent_dict)
@@ -218,6 +227,8 @@ def run_sparql(sparql_query):
   return results
 
 def encode(results,rec_relations,entities):
+  print('results:')
+  print(results)
   data=[]
 
   output = {
@@ -230,19 +241,25 @@ def encode(results,rec_relations,entities):
         "success":True,
         "eval_options": False
     }
-  
+
   if('boolean' in results[0]):
-    
     if(results[0]['boolean']):
         output[ "text"]='Sim'
     else:
         output[ "text"]= 'Não'
 
-
     #output['results'] = {' ':[r]}
     return output,{'bool':0}
 
   #my_dict={key:[] for key in results[0]['head']['vars']}
+  #print('##results:',results[0]['head']['vars'])
+  correct_name = False
+  re_type = results[0]['head']['vars'][0].split('_')[0]
+  if re_type in constants.PERSON:
+    correct_name=True
+
+
+
   my_dict={'Resultados':[] }
   my_entity_dict={key:[] for key in results[0]['head']['vars']}
 
@@ -255,11 +272,30 @@ def encode(results,rec_relations,entities):
         if(len(b[name])>0):
             cond=True
         if(b[name]['value'].startswith('http')):
-          my_entity_dict[name].append(get_rdfs_label(b[name]['value']))
-          my_dict['Resultados'].append(get_rdfs_label(b[name]['value']))
+          if(correct_name):
+            p_name = get_rdfs_label(b[name]['value'])
+            new_name=''
+            if ',' in p_name:
+              n=p_name.split(',')
+              new_name = n[1]+' '+n[0]
+
+            my_entity_dict[name].append(new_name)
+            my_dict['Resultados'].append(new_name)
+          else:
+            my_entity_dict[name].append(get_rdfs_label(b[name]['value']))
+            my_dict['Resultados'].append(get_rdfs_label(b[name]['value']))
         else:
-          my_entity_dict[name].append(b[name]['value'])
-          my_dict['Resultados'].append(b[name]['value'])
+          if(correct_name):
+            p_name = b[name]['value']
+            new_name=''
+            if ',' in p_name:
+              n=p_name.split(',')
+              new_name = n[1]+' '+n[0]
+            my_entity_dict[name].append(new_name)
+            my_dict['Resultados'].append(new_name)
+          else:
+            my_entity_dict[name].append(b[name]['value'])
+            my_dict['Resultados'].append(b[name]['value'])
   if(cond==False):
     output['text']='sem resultados encontrados.'
     output['results'] = my_dict
@@ -270,43 +306,68 @@ def encode(results,rec_relations,entities):
 
 def is_domain(x,y,context):
   print('check if it is domain: ',str(x),str(y))
-  
+
+  if(y in constants.MOVIE_SERIE and x=='location' ):
+    print("(x in constants.MOVIE_SERIE and y=='location' )")
+    return True
+  if(y =='company' and x=='location' ):
+    print("(x =='company' and y=='location' )")
+    return True
+
+
+  if(x in constants.PERSON and y in constants.MOVIE_SERIE ):
+    print("(x in constants.PERSON and y in constants.MOVIE_SERIE )")
+    return True
+  if(y in constants.MOVIE_SERIE and x in constants.MOVIE_PROP_ONLY ):
+    print('y in constants.MOVIE_SERIE and x in constants.MOVIE_PROP_ONLY')
+    return True
+
   if('person' == y and x in constants.PERSON_PROP):
+    print("'person' == y and x in constants.PERSON_PROP")
     return False
 
   #qual indicacao do diretor x
   #qual sua data de nascimento
   if(y in constants.PERSON and x in constants.PERSON_PROP):
+    print("(y in constants.PERSON and x in constants.PERSON_PROP)")
     return True
   
 
 
   #bugfix person com award_... Cenario 3.3
   if(x in constants.PERSON and y == 'person'):
+    print("(x in constants.PERSON and y == 'person')")
     return True
   if(y in constants.PERSON and 'award_'in x):
+    print("(y in constants.PERSON and 'award_'in x)")
     return True
 
   if('person' == y and x in constants.PERSON_PROP):
+    print("('person' == y and x in constants.PERSON_PROP)")
     return False
   
   #bugfix: casos de genero
   if('genre_' in x and y in constants.MOVIE_SERIE):
+    print("if('genre_' in x and y in constants.MOVIE_SERIE)")
     return True
   if(x in context.domain_dict):
     domains = context.domain_dict[x]
     if(y in domains):
+      print("(x in context.domain_dict)  (y in domains)")
       return True
 
     #tratar person
     if(x!='person'):
       if(x in constants.PERSON):
+        print("(x in constants.PERSON)")
         return is_domain('person',y,context)
     if(y!='person'):
       if(y in constants.PERSON):
+        print("(y in constants.PERSON)")
         return is_domain(x,'person',context)
   #tratar serie e movie
   if (x=='movie' or x == 'series') and (y=='movie' or y == 'series'):
+    print("(x=='movie' or x == 'series') and (y=='movie' or y == 'series')")
     return True
   return False 
 
@@ -369,9 +430,12 @@ def find_get_context_related(interest_entities,cont):
       break
     #pra cada entidade no historico
     for ent in hist[1]:
+      #if(cond==False):
+      #  break
       #pra cada entidade nova de interesse
       for interest_entity in interest_entities:
-        print(interest_entity['entity'],ent['entity'])
+        print('interest_entity:',interest_entity['entity'])
+        print('entity:',ent['entity'])
 
         #We have to exclude the entities that have
         #been asked before.
@@ -389,7 +453,8 @@ def find_get_context_related(interest_entities,cont):
         else:
           asked_entity =hist[0][0]
         if('_value' in asked_entity): 
-          asked_entity = asked_entity[:-6] 
+          if(len(asked_entity)>6):
+            asked_entity = asked_entity[:-6] 
         print('asked_entity: ',asked_entity)
         if is_domain(interest_entity['entity'],ent['entity'],cont):
           print('Is domain!!')
@@ -405,9 +470,11 @@ def find_get_context_related(interest_entities,cont):
           if(interest_entity['entity'] in constants.PERSON or ent['entity'] in constants.PERSON):
             person_checked = True
 
-          if(type(hist[0])==bool):
+          if('bool_' in hist[0]):
             hist_intent='ask'
             print('Found history has a Ask question')
+            asked_entity = hist[0][5:]
+            print('asked_entity: ',asked_entity)
           #context_entities.append(ent['entity'])
           if(cond):#so pode receber relacoes 1 vez
             #retirar a relacao principal da questao
@@ -416,6 +483,7 @@ def find_get_context_related(interest_entities,cont):
             #retiramos ((movie,'',award))
             #print('history: ')
             #print(hist[0][0])
+            cond=False
             
             #Adentrando na tupla de contexto e verificando
             for h in hist[2]:
@@ -442,8 +510,14 @@ def find_get_context_related(interest_entities,cont):
               
               #bugfix caso ask: Ex: trocar atriz por ator
               elif(hist_intent=='ask'):
+                print('checking ask cases')
+                print(asked_entity)
+                print(interest_entity)
+                print(h[2])
                 if(h[0] in constants.PERSON and interest_entity['entity'] in constants.PERSON):
                     relations.append([interest_entity['entity'],h[1],h[2]])
+                elif(asked_entity == interest_entity['entity']==h[2]):
+                  relations.append(h)
                 elif((h[0] != asked_entity and h[2] != asked_entity)):
                   relations.append(h)
 
@@ -476,10 +550,12 @@ def find_get_context_related(interest_entities,cont):
         
         elif(is_domain(ent['entity'],interest_entity['entity'],cont)):
           print('Is counter domain!!')
-          if(type(hist[0])==bool):
+          if('bool_' in hist[0]):
             hist_intent='ask'
             print('Found history has a Ask question')
+            asked_entity = hist[0][5:]
           if(cond):
+            cond=False
 
             for h in hist[2]:
               #bug questao: Premio de cameron diaz -> E Angelina joulie?
@@ -571,13 +647,37 @@ def check_context_intent(text):
   text = text.lower()
   print('checking context intent on: ',str(text))
   select_words = ['qual','quais','liste','mostre','onde','aonde','diga seus','fale seus','diga sua',
-                  'diga seu','fale sua']
+                  'diga seu','fale sua','quem']
   for s in select_words:
     if s in text:
       return 'select'
   if ' ' not in text:
     return 'select'
+  parts = text.split()
+  print(parts)
+  s1=['seu','sua','seus','suas']
+  if(parts[0] in s1 and len(parts)<=5):
+    return 'select'
+  s2=['o','a','e','os','as']
+  if(parts[0] in s2 and len(parts)<=2):
+    return 'select'
+  s3=['o','a','e','os','as','de','do','da']
+  if(len(parts)==3):
+    if(parts[1] in s3):
+      return 'select'
+  s4 = ['dele','dela','seu','sua']
+  if(parts[-1] in s4):
+    return 'select'
+  if 'data' in text:
+    return 'select'
+
   return 'ask'
+
+import unicodedata
+def strip_accents(s):
+   return ''.join(c for c in unicodedata.normalize('NFD', s)
+                  if unicodedata.category(c) != 'Mn')
+
 
 import os
 import copy
@@ -599,9 +699,13 @@ def get_output():
   return output
 
 
-def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in_context=False,load_context=True):
+def search(text='',id_client='0',id_hist='0',id_bot=0,clean_context=False,save_context_in_context=False,load_context=True):
+  id_hist = str(id_bot)+'_'+id_hist
   cont = context.Context()  
   hist_intent = 'select'
+  text = text.replace('.','')
+  text = text.replace(',','')
+  print('text: ',text)
 
   #limpar contexto
   if(clean_context):
@@ -620,14 +724,16 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
       print("No context found")
 
   old_text = copy.deepcopy(text)
-  text=clean_word(text)
+  text = strip_accents(text).lower()
+  #text=clean_word(text)
   intent=check_ref(old_text)
 
   if(intent == 'explicit_ref'):
     print('#########Intent: Explicit ref')
     context_intent = check_context_intent(text)
+    print('context_intent: ',context_intent)
     s1,s2= old_text.split('[QUOTED_TEXT]')
-    s1,s2=clean_word(s1),clean_word(s2)
+    s1,s2=strip_accents(s1).lower(),strip_accents(s2).lower()
 
     print('searching for ',s1,' in explicit ref.')
     print(cont.history)
@@ -641,10 +747,13 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     if(do_sugestion):
       output = get_output()
       output['results'] = sugestions
-      output['related'] = sugestions
+      output['related'] = []
       output['text']='Resultados não encontrados. Você quis dizer: '
       output["success"]=False
       output["entities"]=entities
+      output["relations"]=[],
+      output["suggestion_text"]= "",
+      output["eval_options"]=False
       print('returning suggestions (1)...')
       return output
       
@@ -672,10 +781,15 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     if(do_sugestion):
       output = get_output()
       output['results'] = {"sugestões": sugestions}
-      output['related'] = sugestions
+      output['related'] = []
       output['text']='Resultados não encontrados. Você quis dizer: '
       output["success"]=False
       output["entities"]=entities
+      output["relations"]=[],
+      output["suggestion_text"]= "",
+      output["eval_options"]=False
+
+
       print('returning suggestions (2)...')
       return output
     print('Corrected Entities:')
@@ -688,6 +802,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     print('#########Intent: Context')
 
     context_intent = check_context_intent(text)
+    print('context_intent: ',context_intent)
 
     relations=[]
     interest_entities = entities
@@ -732,6 +847,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     sparql_query,interest_var = sparql_build(relations_tuples,spql_type=context_intent)
     print(sparql_query,interest_var)
 
+
     try:
       p = multiprocessing.Process(target=run_sparql, name="Foo", args=(sparql_query,))
       p.start()
@@ -755,7 +871,11 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
           res=results['head']['vars']
           res = list(res.keys())
       if 'boolean' in results:
-        res = results['boolean']
+        #res = results['boolean']
+        if(len(interest_var)>0):
+          res = 'bool_'+interest_var[0]
+        else:
+          res = 'bool_nointerestvar'
 
       else:
         #res = data['results']
@@ -795,6 +915,7 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
   print('Relations for recommendation:',rec_relations)
   
   sparql_query,interest_var = sparql_build(relations_tuples,spql_type=intent)
+  print('Interest Var: ',interest_var)
   print(sparql_query,interest_var)
   #return entities_rasa['intent']['name'],entities,relations_tuples,interest_var
   
@@ -822,7 +943,11 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
         res=results['head']['vars']
         res = list(res.keys())
     if 'boolean' in results:
-      res = results['boolean']
+      #res = results['boolean']
+      if(len(interest_var)>0):
+        res = 'bool_'+interest_var[0]
+      else:
+        res = 'bool_nointerestvar'
     else:
       #res = data['results']
       res = list(enty_dict.keys())
@@ -836,7 +961,26 @@ def search(text='',id_client='0',id_hist='0',clean_context=False,save_context_in
     print('returning empty..')
     output = get_output()
     return output
-    
+
+
+#Cenario: COMPANY
+#text='me diga filmes da empresa Lowave'
+#results = search(text)
+#print(results)
+
+#text='Qual a empresa do filme Always Sergej'
+#results = search(text)
+#print(results)
+
+#text='O filme Always Sergej é da empresa Lowave?'
+#results = search(text)
+#print(results)
+
+#text='me diga filmes da atriz Angelina Jolie'
+#results = search(text)
+#print(results)
+
+
 #funciona
 #text= 'premios do avatar'
 

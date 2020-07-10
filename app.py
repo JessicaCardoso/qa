@@ -34,7 +34,8 @@ class MainClass(Resource):
     def get(self):
     	print("user_id:", request.args.get("uid"))
     	print("history_id", request.args.get("hid"))
-    	return pipeline.search(request.args.get("q"),id_client = request.args.get("uid"),id_hist=request.args.get("hid"))
+    	return pipeline.search(request.args.get("q"),id_client = request.args.get("uid"),id_hist=request.args.get("hid"),
+                                                                    id_bot=request.args.get("bid"))
 
 
 if __name__ == "__main__":
