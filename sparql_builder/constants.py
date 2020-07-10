@@ -233,6 +233,7 @@ NER_ENTITIES_MAP = {
     "actress": "Actress",
     "movie": "Movie",
     "person": "Person",
+    "companyName": "Production_Company",
     "company": "Production_Company",
     "series": "TVSeries",
     "director":"Film_Director",
@@ -381,11 +382,11 @@ MOVIE_SERIE = [
 ]
 
 MOVIE_PROP_ONLY = [
-        "runtime","gross","title","releasedate","productionStartYear","indicationDate","imdbrating","countryCode","companyName","budget"
+        "runtime","gross","title","releasedate","productionStartYear","indicationDate","imdbrating","countryCode","company","budget"
 ]
 
 OTHERS = [
-        "genre","nomination","award","runtime","gross","title","releasedate","productionStartYear","indicationDate","imdbrating","countryCode","companyName","budget","birthName","birthDate"
+        "location","genre","nomination","award","runtime","gross","title","releasedate","productionStartYear","indicationDate","imdbrating","countryCode","company","budget","birthName","birthDate"
 ]
 
 ENTITY_TO_URI={
