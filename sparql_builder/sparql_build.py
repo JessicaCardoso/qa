@@ -1,7 +1,7 @@
 from operator import itemgetter
 from copy import deepcopy
 
-from constants import (
+from .constants import (
     ONTOLOGY_CLASS,
     OBJ_PROPERTIES,
     DATA_PROPERTIES,
