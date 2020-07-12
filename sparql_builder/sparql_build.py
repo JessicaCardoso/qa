@@ -1,7 +1,7 @@
 from operator import itemgetter
 from copy import deepcopy
 
-from .constants import (
+from constants import (
     ONTOLOGY_CLASS,
     OBJ_PROPERTIES,
     DATA_PROPERTIES,
@@ -125,7 +125,12 @@ def part3(question_triples, variables = None, sep="\n"):
         sparql_body.append((build_continent_sparql(first, last)))
       else:
         class_key = NER_ENTITIES_MAP[last]
-
+    # -------------- class para a variável na direita ------------------------------#   Jul 12 2020
+    if last in NER_ENTITIES_MAP:
+        last_class = NER_ENTITIES_MAP[last]
+        sparql_body.append(ONTOLOGY_CLASS[last_class].format(f"?{last}"))
+    # --------------------- fim mudança ---------------------------------------------#
+    
     if class_key and class_key in ONTOLOGY_CLASS:
       sparql_body.append(ONTOLOGY_CLASS[class_key].format(f"?{first}"))
 
