@@ -126,7 +126,8 @@ def part3(question_triples, variables = None, sep="\n"):
       else:
         class_key = NER_ENTITIES_MAP[last]
     # -------------- class para a variável na direita ------------------------------#   Jul 12 2020
-    if last in NER_ENTITIES_MAP:
+    # ----------------Ignorar gênero se tiver na última posição-------------------- #  Jul 22 2020
+    if last in NER_ENTITIES_MAP and last != "genre":
         last_class = NER_ENTITIES_MAP[last]
         sparql_body.append(ONTOLOGY_CLASS[last_class].format(f"?{last}"))
     # --------------------- fim mudança ---------------------------------------------#
